@@ -78,15 +78,15 @@ void FEfficiencyCheckerModModule::StartupModule()
         //     );
     }
 
-    SUBSCRIBE_VIRTUAL_FUNCTION(
-        AFGGameMode,
-        AFGGameMode::PostLogin,
-        [](auto& scope, AFGGameMode* gm, APlayerController* pc) {
-        if (gm && gm->HasAuthority() && !gm->IsMainMenuGameMode()) {
-        gm->RegisterRemoteCallObjectClass(UEfficiencyCheckerRCO::StaticClass());
-        }
-        }
-        );
+    // SUBSCRIBE_VIRTUAL_FUNCTION(
+    //     AFGGameMode,
+    //     AFGGameMode::PostLogin,
+    //     [](auto& scope, AFGGameMode* gm, APlayerController* pc) {
+    //     if (gm && gm->HasAuthority() && !gm->IsMainMenuGameMode()) {
+    //     gm->RegisterRemoteCallObjectClass(UEfficiencyCheckerRCO::StaticClass());
+    //     }
+    //     }
+    //     );
 
     SML::Logging::info(*getTimeStamp(), TEXT(" ==="));
 }

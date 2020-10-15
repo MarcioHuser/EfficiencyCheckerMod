@@ -67,10 +67,7 @@ void AEfficiencyCheckerBuilding::BeginPlay()
 
     _TAG_NAME = GetName() + TEXT(": ");
 
-    if (IsInGameThread())
-    {
-        SML::Logging::info(*getTagName(), TEXT("BeginPlay"));
-    }
+    SML::Logging::info(*getTagName(), TEXT("BeginPlay"));
 
     // {
     //     SML::Logging::info(*getTagName(),TEXT("Adding to list!"));
@@ -252,7 +249,7 @@ void AEfficiencyCheckerBuilding::Tick(float dt)
 
     if (HasAuthority())
     {
-        if (checkTick_ && IsInGameThread())
+        if (checkTick_)
         {
             SML::Logging::info(*getTagName(), TEXT("Ticking"));
         }
@@ -267,7 +264,7 @@ void AEfficiencyCheckerBuilding::Tick(float dt)
             auto playerIt = GetWorld()->GetPlayerControllerIterator();
             for (; playerIt; ++playerIt)
             {
-                if (checkTick_ && IsInGameThread())
+                if (checkTick_)
                 {
                     SML::Logging::info(*getTagName(), TEXT("Player Controller"));
                 }
@@ -281,12 +278,9 @@ void AEfficiencyCheckerBuilding::Tick(float dt)
                             autoUpdateMode == EAutoUpdateType::AUT_ENABLED) ||
                         FVector::Dist(playerTranslation, GetActorLocation()) <= FEfficiencyCheckerModModule::autoUpdateDistance)
                     {
-                        if (IsInGameThread())
-                        {
-                            SML::Logging::info(*getTagName(), TEXT("Last Tick"));
-                            // SML::Logging::info(*getTagName(), TEXT("Player Pawn"));
-                            // SML::Logging::info(*getTagName(), TEXT("Translation X = "), playerTranslation.X, TEXT(" / Y = "), playerTranslation.Y,TEXT( " / Z = "), playerTranslation.Z);
-                        }
+                        SML::Logging::info(*getTagName(), TEXT("Last Tick"));
+                        // SML::Logging::info(*getTagName(), TEXT("Player Pawn"));
+                        // SML::Logging::info(*getTagName(), TEXT("Translation X = "), playerTranslation.X, TEXT(" / Y = "), playerTranslation.Y,TEXT( " / Z = "), playerTranslation.Z);
 
                         // Check if has pending buildings
                         if (!mustUpdate_)
@@ -309,16 +303,14 @@ void AEfficiencyCheckerBuilding::Tick(float dt)
 
                                         if (connectedBuildables.Contains(Cast<AFGBuildable>(connectionComponent->GetConnection()->GetOwner())))
                                         {
-                                            if (IsInGameThread())
-                                            {
-                                                SML::Logging::info(
-                                                    *getTagName(),
-                                                    TEXT("New building "),
-                                                    playerTranslation.X,
-                                                    TEXT(" connected to known building "),
-                                                    *connectionComponent->GetConnection()->GetOwner()->GetPathName()
-                                                    );
-                                            }
+                                            SML::Logging::info(
+                                                *getTagName(),
+                                                TEXT("New building "),
+                                                playerTranslation.X,
+                                                TEXT(" connected to known building "),
+                                                *connectionComponent->GetConnection()->GetOwner()->GetPathName()
+                                                );
+
                                             mustUpdate_ = true;
                                             break;
                                         }
@@ -395,7 +387,7 @@ void AEfficiencyCheckerBuilding::SetCustomInjectedInput(bool enabled, float valu
         auto rco = UEfficiencyCheckerRCO::getRCO(GetWorld());
         if (rco)
         {
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTagName(), TEXT("Calling SetCustomInjectedInput at server"));
             }
@@ -425,7 +417,7 @@ void AEfficiencyCheckerBuilding::SetCustomRequiredOutput(bool enabled, float val
         auto rco = UEfficiencyCheckerRCO::getRCO(GetWorld());
         if (rco)
         {
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTagName(), TEXT("Calling SetCustomRequiredOutput at server"));
             }
@@ -455,7 +447,7 @@ void AEfficiencyCheckerBuilding::SetAutoUpdateMode(EAutoUpdateType autoUpdateMod
         auto rco = UEfficiencyCheckerRCO::getRCO(GetWorld());
         if (rco)
         {
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTagName(), TEXT("Calling SetAutoUpdateMode at server"));
             }
@@ -484,7 +476,7 @@ void AEfficiencyCheckerBuilding::UpdateBuilding(AFGBuildable* newBuildable)
         auto rco = UEfficiencyCheckerRCO::getRCO(GetWorld());
         if (rco)
         {
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTagName(), TEXT("Calling UpdateBuilding at server"));
             }
@@ -498,7 +490,7 @@ void AEfficiencyCheckerBuilding::Server_UpdateBuilding(AFGBuildable* newBuildabl
 {
     if (HasAuthority())
     {
-        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+        if (FEfficiencyCheckerModModule::dumpConnections)
         {
             SML::Logging::info(*getTagName(),TEXT(" OnUpdateBuilding"));
         }
@@ -514,10 +506,7 @@ void AEfficiencyCheckerBuilding::Server_UpdateBuilding(AFGBuildable* newBuildabl
         updateRequested = GetWorld()->GetTimeSeconds() + FEfficiencyCheckerModModule::autoUpdateTimeout;
         // Give a 5 seconds timeout
 
-        if (IsInGameThread())
-        {
-            SML::Logging::info(*getTimeStamp(), TEXT("    Updating "), *GetName());
-        }
+        SML::Logging::info(*getTimeStamp(), TEXT("    Updating "), *GetName());
 
         SetActorTickEnabled(true);
         SetActorTickInterval(FEfficiencyCheckerModModule::autoUpdateTimeout);
@@ -530,13 +519,13 @@ void AEfficiencyCheckerBuilding::Server_UpdateBuilding(AFGBuildable* newBuildabl
     }
     else
     {
-        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+        if (FEfficiencyCheckerModModule::dumpConnections)
         {
             SML::Logging::info(*getTagName(),TEXT(" OnUpdateBuilding - no authority"));
         }
     }
 
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         SML::Logging::info(TEXT("===="));
     }
@@ -544,17 +533,11 @@ void AEfficiencyCheckerBuilding::Server_UpdateBuilding(AFGBuildable* newBuildabl
 
 void AEfficiencyCheckerBuilding::UpdateBuildings(AFGBuildable* newBuildable)
 {
-    if (IsInGameThread())
-    {
-        SML::Logging::info(*getTimeStamp(),TEXT(" EfficiencyCheckerBuilding: UpdateBuildings"));
-    }
+    SML::Logging::info(*getTimeStamp(),TEXT(" EfficiencyCheckerBuilding: UpdateBuildings"));
 
     if (newBuildable)
     {
-        if (IsInGameThread())
-        {
-            SML::Logging::info(*getTimeStamp(),TEXT("    New buildable: "), *newBuildable->GetName());
-        }
+        SML::Logging::info(*getTimeStamp(),TEXT("    New buildable: "), *newBuildable->GetName());
 
         //TArray<UActorComponent*> components = newBuildable->GetComponentsByClass(UFGFactoryConnectionComponent::StaticClass());
         //for (auto component : components) {
@@ -578,10 +561,7 @@ void AEfficiencyCheckerBuilding::UpdateBuildings(AFGBuildable* newBuildable)
         efficiencyBuilding->UpdateBuilding(newBuildable);
     }
 
-    if (IsInGameThread())
-    {
-        SML::Logging::info(TEXT("===="));
-    }
+    SML::Logging::info(TEXT("===="));
 }
 
 // UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "EfficiencyChecker")
@@ -594,7 +574,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
     TSet<AFGBuildable*>& connected
 )
 {
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         SML::Logging::info(*getTagName(), TEXT("GetConnectedProduction"));
     }
@@ -639,7 +619,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
     {
         auto anchorPoint = GetActorLocation() + FVector(0, 0, 100);
 
-        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+        if (FEfficiencyCheckerModModule::dumpConnections)
         {
             SML::Logging::info(*getTagName(), TEXT("Anchor point: X = "), anchorPoint.X,TEXT(" / Y = "), anchorPoint.Y, TEXT(" / Z = "), anchorPoint.Z);
         }
@@ -696,7 +676,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
                 auto connection0Location = conveyor->GetConnection0()->GetConnectorLocation();
                 auto connection1Location = conveyor->GetConnection1()->GetConnectorLocation();
 
-                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                if (FEfficiencyCheckerModModule::dumpConnections)
                 {
                     SML::Logging::info(*getTagName(), TEXT("Found intersecting conveyor "), *conveyor->GetName());
                     SML::Logging::info(
@@ -779,7 +759,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
     {
         auto anchorPoint = GetActorLocation();
 
-        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+        if (FEfficiencyCheckerModModule::dumpConnections)
         {
             SML::Logging::info(*getTagName(), TEXT("Anchor point: X = "), anchorPoint.X,TEXT(" / Y = "), anchorPoint.Y, TEXT(" / Z = "), anchorPoint.Z);
         }
@@ -800,10 +780,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
 
             if (pipe->IsPendingKill() || currentPipe && pipe->GetBuildTime() < currentPipe->GetBuildTime())
             {
-                if (IsInGameThread())
-                {
-                    SML::Logging::info(*getTagName(), TEXT("Conveyor "), *pipe->GetName(), anchorPoint.X,TEXT(" was skipped"));
-                }
+                SML::Logging::info(*getTagName(), TEXT("Conveyor "), *pipe->GetName(), anchorPoint.X,TEXT(" was skipped"));
 
                 continue;
             }
@@ -814,7 +791,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
             if (FVector::PointsAreNear(connection0Location, anchorPoint, 1) ||
                 FVector::PointsAreNear(connection1Location, anchorPoint, 1))
             {
-                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                if (FEfficiencyCheckerModModule::dumpConnections)
                 {
                     SML::Logging::info(*getTagName(), TEXT("Found connected pipe "), *pipe->GetName());
                     SML::Logging::info(
@@ -904,7 +881,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
         limitedThroughputOut = requiredOutput;
     }
 
-    if (!inputConnector && !outputConnector && FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (!inputConnector && !outputConnector && FEfficiencyCheckerModModule::dumpConnections)
     {
         if (resourceForm == EResourceForm::RF_SOLID)
         {
@@ -918,7 +895,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
 
     out_limitedThroughput = min(limitedThroughputIn, limitedThroughputOut);
 
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         SML::Logging::info(TEXT("===="));
     }
@@ -950,7 +927,7 @@ void AEfficiencyCheckerBuilding::UpdateConnectedProduction
         auto rco = UEfficiencyCheckerRCO::getRCO(GetWorld());
         if (rco)
         {
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTagName(), TEXT("Calling UpdateConnectedProduction at server"));
             }
@@ -980,7 +957,7 @@ void AEfficiencyCheckerBuilding::Server_UpdateConnectedProduction
 {
     if (HasAuthority())
     {
-        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+        if (FEfficiencyCheckerModModule::dumpConnections)
         {
             SML::Logging::info(*getTagName(), TEXT("Server_UpdateConnectedProduction"));
         }
@@ -1053,13 +1030,13 @@ void AEfficiencyCheckerBuilding::Server_UpdateConnectedProduction
     }
     else
     {
-        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+        if (FEfficiencyCheckerModModule::dumpConnections)
         {
             SML::Logging::info(*getTagName(), TEXT("Server_UpdateConnectedProduction - no authority"));
         }
     }
 
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         SML::Logging::info(TEXT("===="));
     }
@@ -1140,7 +1117,7 @@ void AEfficiencyCheckerBuilding::RemoveBuilding(AFGBuildable* buildable)
         auto rco = UEfficiencyCheckerRCO::getRCO(GetWorld());
         if (rco)
         {
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTagName(), TEXT("Calling RemoveBuilding at server"));
             }
@@ -1161,10 +1138,7 @@ void AEfficiencyCheckerBuilding::Server_RemoveBuilding(AFGBuildable* buildable)
 
 void AEfficiencyCheckerBuilding::GetEfficiencyCheckerSettings(bool& out_autoUpdate, bool& out_dumpConnections, float& out_autoUpdateTimeout, float& out_autoUpdateDistance)
 {
-    if (IsInGameThread())
-    {
-        SML::Logging::info(*getTimeStamp(), TEXT(" EfficiencyCheckerBuilding: GetEfficiencyCheckerSettings"));
-    }
+    SML::Logging::info(*getTimeStamp(), TEXT(" EfficiencyCheckerBuilding: GetEfficiencyCheckerSettings"));
 
     out_autoUpdate = FEfficiencyCheckerModModule::autoUpdate;
     out_dumpConnections = FEfficiencyCheckerModModule::dumpConnections;
@@ -1174,16 +1148,13 @@ void AEfficiencyCheckerBuilding::GetEfficiencyCheckerSettings(bool& out_autoUpda
 
 void AEfficiencyCheckerBuilding::setPendingPotentialCallback(class AFGBuildableFactory* buildable, float potential)
 {
-    if (IsInGameThread())
-    {
-        SML::Logging::info(
-            *getTimeStamp(),
-            TEXT(" EfficiencyCheckerBuilding: SetPendingPotential of building "),
-            *buildable->GetPathName(),
-            TEXT(" to "),
-            potential
-            );
-    }
+    SML::Logging::info(
+        *getTimeStamp(),
+        TEXT(" EfficiencyCheckerBuilding: SetPendingPotential of building "),
+        *buildable->GetPathName(),
+        TEXT(" to "),
+        potential
+        );
 
     // Update all EfficiencyCheckerBuildings that connects to this building
     FScopeLock ScopeLock(&AEfficiencyCheckerLogic::singleton->eclCritical);
@@ -1227,7 +1198,7 @@ void AEfficiencyCheckerBuilding::AddPendingBuilding(AFGBuildable* buildable)
         auto rco = UEfficiencyCheckerRCO::getRCO(GetWorld());
         if (rco)
         {
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTagName(), TEXT("Calling AddPendingBuilding at server"));
             }

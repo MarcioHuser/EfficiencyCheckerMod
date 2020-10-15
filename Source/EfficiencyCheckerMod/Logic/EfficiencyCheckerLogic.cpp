@@ -3,6 +3,7 @@
 
 // ReSharper disable IdentifierTypo
 #include "EfficiencyCheckerLogic.h"
+
 #include "EfficiencyCheckerModModule.h"
 
 #include "FGBuildableConveyorAttachment.h"
@@ -27,6 +28,7 @@
 #include "FGRailroadSubsystem.h"
 #include "FGRailroadTimeTable.h"
 #include "FGTrain.h"
+#include "FGGameMode.h"
 #include "FGTrainStationIdentifier.h"
 
 #include "SML/util/Logging.h"
@@ -38,6 +40,8 @@
 #include <set>
 #include <map>
 
+
+#include "EfficiencyCheckerRCO.h"
 #include "FGBuildablePipelinePump.h"
 
 #ifndef OPTIMIZE
@@ -109,6 +113,12 @@ void AEfficiencyCheckerLogic::Initialize
         for (auto buildableActor : allBuildables)
         {
             IsValidBuildable(Cast<AFGBuildable>(buildableActor));
+        }
+
+        auto gameMode = Cast<AFGGameMode>(UGameplayStatics::GetGameMode(subsystem->GetWorld()));
+        if (gameMode)
+        {
+            gameMode->RegisterRemoteCallObjectClass(UEfficiencyCheckerRCO::StaticClass());
         }
     }
 }
@@ -189,7 +199,7 @@ void AEfficiencyCheckerLogic::collectInput
         return;
     }
 
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         SML::Logging::info(
             *getTimeStamp(),
@@ -229,7 +239,7 @@ void AEfficiencyCheckerLogic::collectInput
 
                     out_injectedItems.Add(item.ItemClass);
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Item amount = "), item.Amount);
                         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Current potential = "), manufacturer->GetCurrentPotential());
@@ -280,7 +290,7 @@ void AEfficiencyCheckerLogic::collectInput
                     // }
 
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -324,7 +334,7 @@ void AEfficiencyCheckerLogic::collectInput
 
                     item = IFGExtractableResourceInterface::Execute_GetResourceClass(resourceObj);
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -336,7 +346,7 @@ void AEfficiencyCheckerLogic::collectInput
                 }
                 else
                 {
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Extractable resource is null"));
                     }
@@ -353,14 +363,14 @@ void AEfficiencyCheckerLogic::collectInput
                 return;
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, TEXT("Resource name = "), *UFGItemDescriptor::GetItemName(item).ToString());
             }
 
             out_injectedItems.Add(item);
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, TEXT("Current potential = "), extractor->GetCurrentPotential());
                 SML::Logging::info(*getTimeStamp(), *indent, TEXT("Pending potential = "), extractor->GetPendingPotential());
@@ -404,7 +414,7 @@ void AEfficiencyCheckerLogic::collectInput
             //     }
             // }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(
                     *getTimeStamp(),
@@ -459,7 +469,7 @@ void AEfficiencyCheckerLogic::collectInput
                 out_limitedThroughput = min(out_limitedThroughput, previousLimit);
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *conveyor->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" items/minute"));
             }
@@ -559,7 +569,7 @@ void AEfficiencyCheckerLogic::collectInput
                          connectedPlatform = connectedPlatform->GetConnectedPlatformInDirectionOf(i),
                          ++offsetDistance)
                     {
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(
                                 *getTimeStamp(),
@@ -577,7 +587,7 @@ void AEfficiencyCheckerLogic::collectInput
                         {
                             destinationStations.Add(station);
 
-                            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                            if (FEfficiencyCheckerModModule::dumpConnections)
                             {
                                 SML::Logging::info(
                                     *getTimeStamp(),
@@ -591,7 +601,7 @@ void AEfficiencyCheckerLogic::collectInput
                                 i == 1 && !connectedPlatform->IsOrientationReversed())
                             {
                                 stationOffsets.insert(offsetDistance);
-                                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                                if (FEfficiencyCheckerModModule::dumpConnections)
                                 {
                                     SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), offsetDistance);
                                 }
@@ -599,14 +609,14 @@ void AEfficiencyCheckerLogic::collectInput
                             else
                             {
                                 stationOffsets.insert(-offsetDistance);
-                                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                                if (FEfficiencyCheckerModModule::dumpConnections)
                                 {
                                     SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), -offsetDistance);
                                 }
                             }
                         }
 
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             auto cargo = Cast<AFGBuildableTrainPlatformCargo>(connectedPlatform);
                             if (cargo)
@@ -632,7 +642,7 @@ void AEfficiencyCheckerLogic::collectInput
                         continue;
                     }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         if (!train->GetTrainName().IsEmpty())
                         {
@@ -685,7 +695,7 @@ void AEfficiencyCheckerLogic::collectInput
                             continue;
                         }
 
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(
                                 *getTimeStamp(),
@@ -814,7 +824,7 @@ void AEfficiencyCheckerLogic::collectInput
                 {
                     auto rule = smartSplitter->GetSortRuleAt(x);
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -973,7 +983,7 @@ void AEfficiencyCheckerLogic::collectInput
 
                 if (discountedInput > 0)
                 {
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Discounting "), discountedInput, TEXT(" items/minute"));
                     }
@@ -990,7 +1000,7 @@ void AEfficiencyCheckerLogic::collectInput
                 out_injectedInput += out_limitedThroughput;
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *buildable->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" items/minute"));
             }
@@ -1041,7 +1051,7 @@ void AEfficiencyCheckerLogic::collectInput
                 out_limitedThroughput = min(out_limitedThroughput, previousLimit);
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *pipeline->GetName(), TEXT(" flow limit = "), pipeline->GetFlowLimit() * 60, TEXT(" m³/minute"));
                 SML::Logging::info(*getTimeStamp(), *indent, *pipeline->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" m³/minute"));
@@ -1137,7 +1147,7 @@ void AEfficiencyCheckerLogic::collectInput
 
                     if (discountedInput > 0)
                     {
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(*getTimeStamp(), *indent, TEXT("Discounting "), discountedInput, TEXT(" m³/minute"));
                         }
@@ -1150,7 +1160,7 @@ void AEfficiencyCheckerLogic::collectInput
                 }
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *owner->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" m³/minute"));
             }
@@ -1183,7 +1193,7 @@ void AEfficiencyCheckerLogic::collectInput
                      connectedPlatform = connectedPlatform->GetConnectedPlatformInDirectionOf(i),
                      ++offsetDistance)
                 {
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -1201,7 +1211,7 @@ void AEfficiencyCheckerLogic::collectInput
                     {
                         destinationStations.Add(station);
 
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(
                                 *getTimeStamp(),
@@ -1215,7 +1225,7 @@ void AEfficiencyCheckerLogic::collectInput
                             i == 1 && !connectedPlatform->IsOrientationReversed())
                         {
                             stationOffsets.insert(offsetDistance);
-                            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                            if (FEfficiencyCheckerModModule::dumpConnections)
                             {
                                 SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), offsetDistance);
                             }
@@ -1223,14 +1233,14 @@ void AEfficiencyCheckerLogic::collectInput
                         else
                         {
                             stationOffsets.insert(-offsetDistance);
-                            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                            if (FEfficiencyCheckerModModule::dumpConnections)
                             {
                                 SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), -offsetDistance);
                             }
                         }
                     }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         auto cargo = Cast<AFGBuildableTrainPlatformCargo>(connectedPlatform);
                         if (cargo)
@@ -1256,7 +1266,7 @@ void AEfficiencyCheckerLogic::collectInput
                     continue;
                 }
 
-                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                if (FEfficiencyCheckerModModule::dumpConnections)
                 {
                     if (!train->GetTrainName().IsEmpty())
                     {
@@ -1309,7 +1319,7 @@ void AEfficiencyCheckerLogic::collectInput
                         continue;
                     }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -1454,7 +1464,7 @@ void AEfficiencyCheckerLogic::collectInput
 
                 if (discountedInput > 0)
                 {
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Discounting "), discountedInput, TEXT(" m³/minute"));
                     }
@@ -1466,7 +1476,7 @@ void AEfficiencyCheckerLogic::collectInput
                 }
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *owner->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" m³/minute"));
             }
@@ -1496,7 +1506,7 @@ void AEfficiencyCheckerLogic::collectInput
 
     // out_limitedThroughput = 0;
 
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         dumpUnknownClass(indent, owner);
     }
@@ -1554,7 +1564,7 @@ void AEfficiencyCheckerLogic::collectOutput
         }
     }
 
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         SML::Logging::info(
             *getTimeStamp(),
@@ -1594,7 +1604,7 @@ void AEfficiencyCheckerLogic::collectOutput
                         continue;
                     }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Item amount = "), item.Amount);
                         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Current potential = "), manufacturer->GetCurrentPotential());
@@ -1644,7 +1654,7 @@ void AEfficiencyCheckerLogic::collectOutput
                     //     }
                     // }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -1700,7 +1710,7 @@ void AEfficiencyCheckerLogic::collectOutput
                 out_limitedThroughput = min(out_limitedThroughput, previousLimit);
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *conveyorBelt->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" items/minute"));
             }
@@ -1766,7 +1776,7 @@ void AEfficiencyCheckerLogic::collectOutput
                          connectedPlatform = connectedPlatform->GetConnectedPlatformInDirectionOf(i),
                          ++offsetDistance)
                     {
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(
                                 *getTimeStamp(),
@@ -1784,7 +1794,7 @@ void AEfficiencyCheckerLogic::collectOutput
                         {
                             destinationStations.Add(station);
 
-                            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                            if (FEfficiencyCheckerModModule::dumpConnections)
                             {
                                 SML::Logging::info(
                                     *getTimeStamp(),
@@ -1798,7 +1808,7 @@ void AEfficiencyCheckerLogic::collectOutput
                                 i == 1 && !connectedPlatform->IsOrientationReversed())
                             {
                                 stationOffsets.insert(offsetDistance);
-                                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                                if (FEfficiencyCheckerModModule::dumpConnections)
                                 {
                                     SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), offsetDistance);
                                 }
@@ -1806,7 +1816,7 @@ void AEfficiencyCheckerLogic::collectOutput
                             else
                             {
                                 stationOffsets.insert(-offsetDistance);
-                                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                                if (FEfficiencyCheckerModModule::dumpConnections)
                                 {
                                     SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), -offsetDistance);
                                 }
@@ -1816,7 +1826,7 @@ void AEfficiencyCheckerLogic::collectOutput
                         auto cargo = Cast<AFGBuildableTrainPlatformCargo>(connectedPlatform);
                         if (cargo)
                         {
-                            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                            if (FEfficiencyCheckerModModule::dumpConnections)
                             {
                                 SML::Logging::info(
                                     *getTimeStamp(),
@@ -1839,7 +1849,7 @@ void AEfficiencyCheckerLogic::collectOutput
                         continue;
                     }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         if (!train->GetTrainName().IsEmpty())
                         {
@@ -1892,7 +1902,7 @@ void AEfficiencyCheckerLogic::collectOutput
                             continue;
                         }
 
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(
                                 *getTimeStamp(),
@@ -1998,7 +2008,7 @@ void AEfficiencyCheckerLogic::collectOutput
                 {
                     auto rule = smartSplitter->GetSortRuleAt(x);
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -2100,7 +2110,7 @@ void AEfficiencyCheckerLogic::collectOutput
                 }
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *buildable->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" items/minute"));
             }
@@ -2147,7 +2157,7 @@ void AEfficiencyCheckerLogic::collectOutput
                 out_limitedThroughput = min(out_limitedThroughput, previousLimit);
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *pipeline->GetName(), TEXT(" flow limit = "), pipeline->GetFlowLimit() * 60, TEXT(" m³/minute"));
                 SML::Logging::info(*getTimeStamp(), *indent, *pipeline->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" m³/minute"));
@@ -2200,7 +2210,7 @@ void AEfficiencyCheckerLogic::collectOutput
                 }
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *owner->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" m³/minute"));
             }
@@ -2235,7 +2245,7 @@ void AEfficiencyCheckerLogic::collectOutput
                      connectedPlatform = connectedPlatform->GetConnectedPlatformInDirectionOf(i),
                      ++offsetDistance)
                 {
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -2253,7 +2263,7 @@ void AEfficiencyCheckerLogic::collectOutput
                     {
                         destinationStations.Add(station);
 
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(
                                 *getTimeStamp(),
@@ -2267,7 +2277,7 @@ void AEfficiencyCheckerLogic::collectOutput
                             i == 1 && !connectedPlatform->IsOrientationReversed())
                         {
                             stationOffsets.insert(offsetDistance);
-                            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                            if (FEfficiencyCheckerModModule::dumpConnections)
                             {
                                 SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), offsetDistance);
                             }
@@ -2275,14 +2285,14 @@ void AEfficiencyCheckerLogic::collectOutput
                         else
                         {
                             stationOffsets.insert(-offsetDistance);
-                            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                            if (FEfficiencyCheckerModModule::dumpConnections)
                             {
                                 SML::Logging::info(*getTimeStamp(), *indent, TEXT("        offset distance = "), -offsetDistance);
                             }
                         }
                     }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         auto cargo = Cast<AFGBuildableTrainPlatformCargo>(connectedPlatform);
                         if (cargo)
@@ -2308,7 +2318,7 @@ void AEfficiencyCheckerLogic::collectOutput
                     continue;
                 }
 
-                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                if (FEfficiencyCheckerModModule::dumpConnections)
                 {
                     if (!train->GetTrainName().IsEmpty())
                     {
@@ -2361,7 +2371,7 @@ void AEfficiencyCheckerLogic::collectOutput
                         continue;
                     }
 
-                    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                    if (FEfficiencyCheckerModModule::dumpConnections)
                     {
                         SML::Logging::info(
                             *getTimeStamp(),
@@ -2469,7 +2479,7 @@ void AEfficiencyCheckerLogic::collectOutput
                 }
             }
 
-            if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+            if (FEfficiencyCheckerModModule::dumpConnections)
             {
                 SML::Logging::info(*getTimeStamp(), *indent, *owner->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" m³/minute"));
             }
@@ -2486,7 +2496,7 @@ void AEfficiencyCheckerLogic::collectOutput
         {
             if (in_injectedItems.Contains(generator->GetSupplementalResourceClass()) && !seenActors[generator].Contains(generator->GetSupplementalResourceClass()))
             {
-                if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                if (FEfficiencyCheckerModModule::dumpConnections)
                 {
                     SML::Logging::info(
                         *getTimeStamp(),
@@ -2511,7 +2521,7 @@ void AEfficiencyCheckerLogic::collectOutput
                 {
                     if (generator->IsValidFuel(item) && !seenActors[generator].Contains(item))
                     {
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(*getTimeStamp(), *indent, TEXT("Energy item = "), *UFGItemDescriptor::GetItemName(item).ToString());
                         }
@@ -2523,7 +2533,7 @@ void AEfficiencyCheckerLogic::collectOutput
                         //     energy *= 1000;
                         // }
 
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(*getTimeStamp(), *indent, TEXT("Energy = "), energy);
                             SML::Logging::info(*getTimeStamp(), *indent, TEXT("Current potential = "), generator->GetCurrentPotential());
@@ -2557,7 +2567,7 @@ void AEfficiencyCheckerLogic::collectOutput
                         //     }
                         // }
 
-                        if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+                        if (FEfficiencyCheckerModModule::dumpConnections)
                         {
                             SML::Logging::info(
                                 *getTimeStamp(),
@@ -2589,7 +2599,7 @@ void AEfficiencyCheckerLogic::collectOutput
 
     // out_limitedThroughput = 0;
 
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         dumpUnknownClass(indent, owner);
     }
@@ -2597,7 +2607,7 @@ void AEfficiencyCheckerLogic::collectOutput
 
 void AEfficiencyCheckerLogic::dumpUnknownClass(const FString& indent, AActor* owner)
 {
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         SML::Logging::info(*getTimeStamp(), *indent, TEXT("Unknown Class "), *owner->GetClass()->GetPathName());
 
@@ -2659,7 +2669,7 @@ void AEfficiencyCheckerLogic::dumpUnknownClass(const FString& indent, AActor* ow
 
 void AEfficiencyCheckerLogic::DumpInformation(TSubclassOf<UFGItemDescriptor> itemDescriptorClass)
 {
-    if (FEfficiencyCheckerModModule::dumpConnections && IsInGameThread())
+    if (FEfficiencyCheckerModModule::dumpConnections)
     {
         if (!itemDescriptorClass)
         {
