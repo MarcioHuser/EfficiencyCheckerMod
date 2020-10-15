@@ -1,7 +1,7 @@
 # Efficiency Checker Mod
 See if your production is underflowing!
 
-See the mod at [ficsit.app]https://ficsit.app/mod/ZNFaaRV4ow5M4
+See the mod at [ficsit.app](https://ficsit.app/mod/ZNFaaRV4ow5M4)
 
 # Discord Server
 Join the [discord server](https://discord.gg/X6AUfn) to talk about Satisfactory Modding in general.
