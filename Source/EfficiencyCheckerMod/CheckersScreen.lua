@@ -14,7 +14,7 @@ screen = component.proxy(component.findComponent("MainScreen"))[1]
 gpu:bindScreen(screen)
 
 -- columns = 50, lines = 22. Make your screen have the same 50 columns, and ajust the lines accordingly to the size of the screen you made
-gpu:setSize(50, 22)
+gpu:setSize(60, 22)
 
 w,h=gpu:getSize()
 
@@ -61,7 +61,7 @@ function updateChecker()
 	for _,checker in pairs(checkers) do
 		gpu:setText(0,line, "- " .. checker.nick)
 
-		checker:updateConnectedProduction()
+		checker:updateBuilding()
 
 		if checker:isCustomInjectedInput() then
 		   setBlueBG()
