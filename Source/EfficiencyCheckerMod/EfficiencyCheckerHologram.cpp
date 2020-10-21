@@ -2,15 +2,15 @@
 // ReSharper disable CommentTypo
 
 #include "EfficiencyCheckerHologram.h"
-#include "FGBuildableFoundation.h"
-#include "FGBuildableConveyorBelt.h"
-#include "FGBuildablePipeline.h"
-#include "FGBuildableRoad.h"
 #include "EfficiencyCheckerBuilding.h"
 #include "EfficiencyCheckerRCO.h"
+
+#include "FGBuildableConveyorBelt.h"
+#include "FGBuildableFoundation.h"
+#include "FGBuildablePipeline.h"
+#include "FGBuildableRoad.h"
 #include "FGConstructDisqualifier.h"
 #include "FGPipeConnectionComponent.h"
-#include "Platforms/AkPlatform_iOS/AkIOSInitializationSettings.h"
 
 #include "SML/util/Logging.h"
 

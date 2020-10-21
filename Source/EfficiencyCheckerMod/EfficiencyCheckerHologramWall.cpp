@@ -3,9 +3,9 @@
 
 #include "EfficiencyCheckerHologramWall.h"
 #include "EfficiencyCheckerBuilding.h"
+
 #include "FGConstructDisqualifier.h"
 #include "FGFactoryConnectionComponent.h"
-#include "Platforms/AkPlatform_iOS/AkIOSInitializationSettings.h"
 
 #include "SML/util/Logging.h"
 

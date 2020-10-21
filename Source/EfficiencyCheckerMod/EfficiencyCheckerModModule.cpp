@@ -1,6 +1,6 @@
 #include "EfficiencyCheckerModModule.h"
 #include "EfficiencyCheckerBuilding.h"
-#include "EfficiencyCheckerRCO.h"
+
 #include "FGBuildableFactory.h"
 #include "FGGameMode.h"
 

@@ -1,9 +1,8 @@
 ﻿// ReSharper disable CppUE4CodingStandardNamingViolationWarning
 // ReSharper disable CommentTypo
-
 // ReSharper disable IdentifierTypo
-#include "EfficiencyCheckerLogic.h"
 
+#include "EfficiencyCheckerLogic.h"
 #include "EfficiencyCheckerModModule.h"
 
 #include "FGBuildableConveyorAttachment.h"
@@ -22,13 +21,13 @@
 #include "FGConnectionComponent.h"
 #include "FGEquipmentAttachment.h"
 #include "FGEquipmentDescriptor.h"
+#include "FGGameMode.h"
 #include "FGItemCategory.h"
 #include "FGItemDescriptor.h"
 #include "FGPipeConnectionComponent.h"
 #include "FGRailroadSubsystem.h"
 #include "FGRailroadTimeTable.h"
 #include "FGTrain.h"
-#include "FGGameMode.h"
 #include "FGTrainStationIdentifier.h"
 
 #include "SML/util/Logging.h"
@@ -2106,6 +2105,64 @@ void AEfficiencyCheckerLogic::collectOutput
                     else
                     {
                         out_limitedThroughput += previousLimit;
+                    }
+                }
+
+                for (int connectorIndex = 0; connectorIndex < components.Num(); connectorIndex++)
+                {
+                    auto connection = components[connectorIndex];
+
+                    if (connection == connector)
+                    {
+                        continue;
+                    }
+
+                    if (!connection->IsConnected())
+                    {
+                        continue;
+                    }
+
+                    if (connection->GetDirection() != EFactoryConnectionDirection::FCD_INPUT)
+                    {
+                        continue;
+                    }
+
+                    auto inputIndex = connection->GetName()[connection->GetName().Len() - 1] - '1';
+
+                    float previousLimit = 0;
+                    float discountedOutput = 0;
+                    TSet<AActor*> seenActorsCopy;
+
+                    auto tempInjectedItems = in_injectedItems;
+
+                    for (auto actor : seenActors)
+                    {
+                        seenActorsCopy.Add(actor.first);
+                    }
+
+                    collectInput(
+                        resourceForm,
+                        false,
+                        connection->GetConnection(),
+                        discountedOutput,
+                        previousLimit,
+                        seenActorsCopy,
+                        connected,
+                        tempInjectedItems,
+                        tempInjectedItems,
+                        buildableSubsystem,
+                        level + 1,
+                        indent + TEXT("    ")
+                        );
+
+                    if (discountedOutput > 0)
+                    {
+                        if (FEfficiencyCheckerModModule::dumpConnections)
+                        {
+                            SML::Logging::info(*getTimeStamp(), *indent, TEXT("Discounting "), discountedOutput, TEXT(" items/minute"));
+                        }
+
+                        out_requiredOutput -= discountedOutput;
                     }
                 }
             }

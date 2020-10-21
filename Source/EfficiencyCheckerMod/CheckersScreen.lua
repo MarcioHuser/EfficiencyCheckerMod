@@ -13,7 +13,7 @@ screen = component.proxy(component.findComponent("MainScreen"))[1]
 
 gpu:bindScreen(screen)
 
--- columns = 50, lines = 22. Make your screen have the same 50 columns, and ajust the lines accordingly to the size of the screen you made
+-- columns = 60, lines = 22. Make your screen have the same number of columns, and ajust the lines accordingly to the size of the screen you made
 gpu:setSize(60, 22)
 
 w,h=gpu:getSize()
@@ -45,6 +45,8 @@ end
 
 function updateChecker()
     checkers = component.proxy(component.findComponent("Checker"))
+    
+    table.sort(checkers, function(a,b) return a.nick < b.nick end)
 
 	line = 1
 

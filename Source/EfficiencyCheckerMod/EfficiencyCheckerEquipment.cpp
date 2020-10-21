@@ -2,9 +2,9 @@
 #include "Logic/EfficiencyCheckerLogic.h"
 
 #include "FGBuildablePipeline.h"
+#include "FGItemDescriptor.h"
 #include "FGPipeConnectionComponent.h"
 #include "FGPlayerController.h"
-#include "FGItemDescriptor.h"
 
 #include "Util/Optimize.h"
 #include "Util/Util.h"
