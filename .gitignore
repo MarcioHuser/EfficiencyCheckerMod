@@ -106,3 +106,5 @@ Source/SuppressUnaffordableMod
 Content/WallPipeSupports/
 
 *_junction/
+
+*.bak

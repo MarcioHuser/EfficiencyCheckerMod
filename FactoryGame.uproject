@@ -48,10 +48,6 @@
 		{
 			"Name": "Alpakit",
 			"Enabled": true
-		},
-		{
-			"Name": "RiderLink",
-			"Enabled": true
 		}
 	]
 }
