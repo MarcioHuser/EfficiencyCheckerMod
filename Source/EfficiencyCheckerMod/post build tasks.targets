@@ -5,8 +5,8 @@
         <None Remove="**\CVS\*"/>
     </ItemGroup>
     <Target Name="PostBuild_EfficiencyCheckerMod" AfterTargets="Build" Condition="'$(Configuration)|$(Platform)'=='Shipping|x64'">
-        <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.dll" DestinationFolder="c:\Games\Epic Games\SatisfactoryEarlyAccess\mods"/>
-        <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.pdb" DestinationFolder="c:\Games\Epic Games\SatisfactoryEarlyAccess\mods"/>
+        <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.dll" DestinationFolder="c:\Games\Epic Games\SatisfactoryExperimental\mods"/>
+        <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.pdb" DestinationFolder="c:\Games\Epic Games\SatisfactoryExperimental\mods"/>
         <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.dll" DestinationFolder="..\..\Mods\EfficiencyCheckerMod"/>
         <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.pdb" DestinationFolder="..\..\Mods\EfficiencyCheckerMod"/>
         <Delete Files="..\..\Mods\EfficiencyCheckerMod\incomplete-data.json"/>

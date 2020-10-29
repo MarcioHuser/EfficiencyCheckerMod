@@ -3,6 +3,7 @@
 
 #include "FGBuildableFactory.h"
 #include "FGGameMode.h"
+#include "FGVersionFunctionLibrary.h"
 
 #include "SML/util/Logging.h"
 #include "SML/mod/hooking.h"
@@ -21,6 +22,21 @@ bool FEfficiencyCheckerModModule::ignoreStorageTeleporter = false;
 
 void FEfficiencyCheckerModModule::StartupModule()
 {
+    // // This is EXP branch. Check if game is EXP too
+    // if (UFGVersionFunctionLibrary::GetGameVersion() != EGameVersion::GV_Experimental)
+    // {
+    //     // Show popup warning
+    //
+    //     FPopupClosed ClosedDelagate;
+    //     UFGBlueprintFunctionLibrary::AddPopupWithCloseDelegate(
+    //         GetLocalController(),
+    //         FText::FromString(TEXT("")),
+    //         FText::FromString(TEXT("")),
+    //         ClosedDelagate,
+    //         EPopupId::PID_OK
+    //         );
+    // }
+
     SML::Logging::info(*getTimeStamp(), TEXT(" EfficiencyChecker: StartupModule"));
 
     TSharedRef<FJsonObject> defaultValues(new FJsonObject());
