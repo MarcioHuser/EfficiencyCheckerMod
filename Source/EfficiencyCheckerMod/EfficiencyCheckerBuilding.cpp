@@ -57,11 +57,11 @@ AEfficiencyCheckerBuilding::AEfficiencyCheckerBuilding()
 // Called when the game starts or when spawned
 void AEfficiencyCheckerBuilding::BeginPlay()
 {
-    Super::BeginPlay();
-
     _TAG_NAME = GetName() + TEXT(": ");
 
     SML::Logging::info(*getTagName(), TEXT("BeginPlay"));
+
+    Super::BeginPlay();
 
     // {
     //     SML::Logging::info(*getTagName(),TEXT("Adding to list!"));
@@ -75,7 +75,9 @@ void AEfficiencyCheckerBuilding::BeginPlay()
         auto arrows = GetComponentsByTag(UStaticMeshComponent::StaticClass(), TEXT("DirectionArrow"));
         for (auto arrow : arrows)
         {
-            Cast<UStaticMeshComponent>(arrow)->SetVisibilitySML(false);
+            // Cast<UStaticMeshComponent>(arrow)->SetVisibilitySML(false);
+
+            arrow->DestroyComponent();
         }
 
         TInlineComponentArray<UWidgetComponent*> widgets(this, true);
