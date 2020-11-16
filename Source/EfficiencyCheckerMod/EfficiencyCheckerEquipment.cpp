@@ -49,7 +49,8 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
 
             for (auto item : allItems)
             {
-                if (!UFGBlueprintFunctionLibrary::CanBeOnConveyor(item) ||
+                if (!item ||
+                    !UFGBlueprintFunctionLibrary::CanBeOnConveyor(item) ||
                     UFGItemDescriptor::GetForm(item) != EResourceForm::RF_SOLID ||
                     AEfficiencyCheckerLogic::singleton->wildCardItemDescriptors.Contains(item) ||
                     AEfficiencyCheckerLogic::singleton->overflowItemDescriptors.Contains(item) ||
