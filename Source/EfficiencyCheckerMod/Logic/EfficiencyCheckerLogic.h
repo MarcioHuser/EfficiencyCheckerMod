@@ -44,6 +44,7 @@ public:
         const TSet<TSubclassOf<UFGItemDescriptor>>& restrictItems,
         class AFGBuildableSubsystem* buildableSubsystem,
         int level,
+        bool& overflow,
         const FString& indent
     );
 
@@ -58,6 +59,7 @@ public:
         const TSet<TSubclassOf<UFGItemDescriptor>>& in_injectedItems,
         class AFGBuildableSubsystem* buildableSubsystem,
         int level,
+        bool& overflow,
         const FString& indent
     );
 
@@ -74,6 +76,8 @@ public:
 
         return FString::Printf(TEXT("%02d:%02d:%02d"), now.GetHour(), now.GetMinute(), now.GetSecond());
     }
+
+    static float getPipeSpeed(AFGBuildablePipeline* pipe);
 
     TSet<TSubclassOf<UFGItemDescriptor>> nuclearWasteItemDescriptors;
     TSet<TSubclassOf<UFGItemDescriptor>> noneItemDescriptors;

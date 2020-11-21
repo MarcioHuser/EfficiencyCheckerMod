@@ -28,16 +28,18 @@ enum class EAutoUpdateType: uint8
     AUT_DISABLED UMETA(DisplayName = "Disabled"),
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(
     FUpdateItemEvent,
     float,
-    in_injectedInput,
+    injectedInput,
     float,
-    in_limitedThroughput,
+    limitedThroughput,
     float,
-    in_requiredOutput,
+    requiredOutput,
     const TArray<TSubclassOf<UFGItemDescriptor>>&,
-    in_injectedItems
+    injectedItems,
+    bool,
+    overflow
     );
 
 UCLASS(Blueprintable)
@@ -106,7 +108,8 @@ public:
         UPARAM(DisplayName = "Limited Throughput") float& out_limitedThroughput,
         UPARAM(DisplayName = "Required Output") float& out_requiredOutput,
         UPARAM(DisplayName = "Items") TSet<TSubclassOf<UFGItemDescriptor>>& out_injectedItems,
-        UPARAM(DisplayName = "Connected Buildings") TSet<AFGBuildable*>& connected
+        UPARAM(DisplayName = "Connected Buildings") TSet<AFGBuildable*>& connected,
+        UPARAM(DisplayName = "Overflow") bool& out_overflow
     );
 
     UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "EfficiencyChecker")
@@ -138,7 +141,8 @@ public:
         UPARAM(DisplayName = "Injected Input") float in_injectedInput,
         UPARAM(DisplayName = "Limited Throughput") float in_limitedThroughput,
         UPARAM(DisplayName = "Required Output") float in_requiredOutput,
-        UPARAM(DisplayName = "Items") const TArray<TSubclassOf<UFGItemDescriptor>>& in_injectedItems
+        UPARAM(DisplayName = "Items") const TArray<TSubclassOf<UFGItemDescriptor>>& in_injectedItems,
+        UPARAM(DisplayName = "Overflow") bool in_overflow
     );
 
     UFUNCTION(BlueprintImplementableEvent, Category = "EfficiencyChecker")
@@ -214,6 +218,9 @@ public:
     float requiredOutput = -1;
     UPROPERTY(BlueprintReadOnly, SaveGame, Replicated)
     bool customRequiredOutput = false;
+    
+    UPROPERTY(BlueprintReadOnly, SaveGame, Replicated)
+    bool overflow = false;
 
     UPROPERTY(BlueprintReadOnly, SaveGame, Replicated)
     EAutoUpdateType autoUpdateMode = EAutoUpdateType::AUT_USE_DEFAULT;

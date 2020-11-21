@@ -22,8 +22,8 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
     float injectedInput = 0;
     float requiredOutput = 0;
 
-    class UFGConnectionComponent* inputConnector = nullptr;
-    class UFGConnectionComponent* outputConnector = nullptr;
+    UFGConnectionComponent* inputConnector = nullptr;
+    UFGConnectionComponent* outputConnector = nullptr;
 
     TSet<TSubclassOf<UFGItemDescriptor>> restrictedItems;
 
@@ -34,6 +34,9 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
     const FString indent(TEXT("    "));
     TSet<TSubclassOf<UFGItemDescriptor>> injectedItemsSet;
 
+    float initialThroughtputLimit = 0;
+    bool overflow = false;
+
     if (targetBuildable)
     {
         auto conveyor = Cast<AFGBuildableConveyorBase>(targetBuildable);
@@ -41,6 +44,8 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
         {
             inputConnector = conveyor->GetConnection0();
             outputConnector = conveyor->GetConnection1();
+
+            initialThroughtputLimit = conveyor->GetSpeed() / 2;
 
             resourceForm = EResourceForm::RF_SOLID;
 
@@ -69,11 +74,21 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
             auto pipe = Cast<AFGBuildablePipeline>(targetBuildable);
             if (pipe)
             {
-                inputConnector = pipe->GetPipeConnection0();
-                outputConnector = pipe->GetPipeConnection1();
+                if (pipe->GetPipeConnection0()->IsConnected())
+                {
+                    inputConnector = pipe->GetPipeConnection0();
+                    outputConnector = pipe->GetPipeConnection0();
+                }
+                else if (pipe->GetPipeConnection1()->IsConnected())
+                {
+                    inputConnector = pipe->GetPipeConnection1();
+                    outputConnector = pipe->GetPipeConnection1();
+                }
+
+                initialThroughtputLimit = AEfficiencyCheckerLogic::getPipeSpeed(pipe);
 
                 TSubclassOf<UFGItemDescriptor> fluidItem = pipe->GetPipeConnection0()->GetFluidDescriptor();
-                if (! fluidItem)
+                if (!fluidItem)
                 {
                     fluidItem = pipe->GetPipeConnection1()->GetFluidDescriptor();
                 }
@@ -93,7 +108,7 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
         }
     }
 
-    float limitedThroughputIn = 0;
+    float limitedThroughputIn = initialThroughtputLimit;
 
     if (inputConnector)
     {
@@ -111,11 +126,12 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
             restrictedItems,
             buildableSubsystem,
             0,
+            overflow,
             indent
             );
     }
 
-    float limitedThroughputOut = 0;
+    float limitedThroughputOut = initialThroughtputLimit;
 
     if (outputConnector)
     {
@@ -131,12 +147,13 @@ void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildab
             injectedItemsSet,
             buildableSubsystem,
             0,
+            overflow,
             indent
             );
     }
 
     if (inputConnector || outputConnector)
     {
-        ShowStatsWidget(injectedInput, min(limitedThroughputIn, limitedThroughputOut), requiredOutput, injectedItemsSet.Array());
+        ShowStatsWidget(injectedInput, min(limitedThroughputIn, limitedThroughputOut), requiredOutput, injectedItemsSet.Array(), overflow);
     }
 }

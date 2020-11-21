@@ -252,7 +252,7 @@ void AEfficiencyCheckerBuilding::Tick(float dt)
 
         if (doUpdateItem)
         {
-            UpdateItem(injectedInput, limitedThroughput, requiredOutput, injectedItems);
+            UpdateItem(injectedInput, limitedThroughput, requiredOutput, injectedItems, overflow);
             SetActorTickEnabled(false);
         }
         else if (lastUpdated < updateRequested && updateRequested <= GetWorld()->GetTimeSeconds())
@@ -567,7 +567,8 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
     float& out_limitedThroughput,
     float& out_requiredOutput,
     TSet<TSubclassOf<UFGItemDescriptor>>& out_injectedItems,
-    TSet<AFGBuildable*>& connected
+    TSet<AFGBuildable*>& connected,
+    bool& in_overflow
 )
 {
     if (FEfficiencyCheckerModModule::dumpConnections)
@@ -579,29 +580,52 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
 
     const auto buildableSubsystem = AFGBuildableSubsystem::Get(GetWorld());
 
-    class UFGConnectionComponent* inputConnector = nullptr;
-    class UFGConnectionComponent* outputConnector = nullptr;
-    //AFGBuildable* inputConveyor = nullptr;
-    //AFGBuildable* outputConveyor = nullptr;
+    UFGConnectionComponent* inputConnector = nullptr;
+    UFGConnectionComponent* outputConnector = nullptr;
 
     TSet<TSubclassOf<UFGItemDescriptor>> restrictedItems;
+
+    float initialThroughtputLimit = 0;
+    in_overflow = false;
 
     if (innerPipelineAttachment)
     {
         auto attachmentPipeConnections = innerPipelineAttachment->GetPipeConnections();
 
-        inputConnector = attachmentPipeConnections.Num() > 0 ? attachmentPipeConnections[0] : nullptr;
-        outputConnector = attachmentPipeConnections.Num() > 1 ? attachmentPipeConnections[1] : nullptr;
-
         TSubclassOf<UFGItemDescriptor> fluidItem;
+
+        bool firstConnector = true;
 
         for (auto pipeConnection : attachmentPipeConnections)
         {
-            fluidItem = pipeConnection->GetFluidDescriptor();
-
-            if (fluidItem)
+            if (!inputConnector)
             {
-                break;
+                inputConnector = pipeConnection;
+            }
+            else if (!outputConnector)
+            {
+                outputConnector = pipeConnection;
+            }
+
+            auto pipe = Cast<AFGBuildablePipeline>(pipeConnection->GetConnection()->GetOwner());
+
+            if (pipe)
+            {
+                if (firstConnector)
+                {
+                    firstConnector = !firstConnector;
+
+                    initialThroughtputLimit = AEfficiencyCheckerLogic::getPipeSpeed(pipe);
+                }
+                else
+                {
+                    initialThroughtputLimit = FMath::Min(AEfficiencyCheckerLogic::getPipeSpeed(pipe), initialThroughtputLimit);
+                }
+            }
+
+            if (!fluidItem)
+            {
+                fluidItem = pipeConnection->GetFluidDescriptor();
             }
         }
 
@@ -707,6 +731,8 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
                 currentConveyor = conveyor;
                 inputConnector = conveyor->GetConnection0();
                 outputConnector = conveyor->GetConnection1();
+
+                initialThroughtputLimit = conveyor->GetSpeed() / 2;
             }
             //}
             //
@@ -812,8 +838,16 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
                 }
 
                 currentPipe = pipe;
-                inputConnector = pipe->GetPipeConnection0();
-                outputConnector = pipe->GetPipeConnection1();
+                if (pipe->GetPipeConnection0()->IsConnected())
+                {
+                    inputConnector = pipe->GetPipeConnection0();
+                    outputConnector = pipe->GetPipeConnection0();
+                }
+                else if (pipe->GetPipeConnection1()->IsConnected())
+                {
+                    inputConnector = pipe->GetPipeConnection1();
+                    outputConnector = pipe->GetPipeConnection1();
+                }
 
                 TSubclassOf<UFGItemDescriptor> fluidItem = pipe->GetPipeConnection0()->GetFluidDescriptor();
                 if (! fluidItem)
@@ -832,7 +866,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
         }
     }
 
-    float limitedThroughputIn = customInjectedInput ? injectedInput : 0;
+    float limitedThroughputIn = customInjectedInput ? injectedInput : initialThroughtputLimit;
 
     if (inputConnector)
     {
@@ -850,11 +884,12 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
             restrictedItems,
             buildableSubsystem,
             0,
+            in_overflow,
             indent
             );
     }
 
-    float limitedThroughputOut = 0;
+    float limitedThroughputOut = initialThroughtputLimit;
 
     if (outputConnector && !customRequiredOutput)
     {
@@ -870,6 +905,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
             out_injectedItems,
             buildableSubsystem,
             0,
+            in_overflow,
             indent
             );
     }
@@ -890,7 +926,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
         }
     }
 
-    out_limitedThroughput = min(limitedThroughputIn, limitedThroughputOut);
+    out_limitedThroughput = FMath::Min(limitedThroughputIn, limitedThroughputOut);
 
     if (FEfficiencyCheckerModModule::dumpConnections)
     {
@@ -997,7 +1033,9 @@ void AEfficiencyCheckerBuilding::Server_UpdateConnectedProduction
 
         TSet<TSubclassOf<UFGItemDescriptor>> injectedItemsSet;
 
-        GetConnectedProduction(injectedInput, limitedThroughput, requiredOutput, injectedItemsSet, connectedBuildables);
+        overflow = false;
+
+        GetConnectedProduction(injectedInput, limitedThroughput, requiredOutput, injectedItemsSet, connectedBuildables, overflow);
 
         injectedItems = injectedItemsSet.Array();
 
@@ -1023,7 +1061,7 @@ void AEfficiencyCheckerBuilding::Server_UpdateConnectedProduction
             addOnSortRulesChangedDelegateBindings(bindingsToAdd);
         }
 
-        UpdateItem(injectedInput, limitedThroughput, requiredOutput, injectedItems);
+        UpdateItem(injectedInput, limitedThroughput, requiredOutput, injectedItems, overflow);
     }
     else
     {
@@ -1179,6 +1217,8 @@ void AEfficiencyCheckerBuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProp
     DOREPLIFETIME(AEfficiencyCheckerBuilding, requiredOutput);
     DOREPLIFETIME(AEfficiencyCheckerBuilding, customRequiredOutput);
 
+    DOREPLIFETIME(AEfficiencyCheckerBuilding, overflow);
+
     // DOREPLIFETIME(AEfficiencyCheckerBuilding, connectedBuildables);
 
     // DOREPLIFETIME(AEfficiencyCheckerBuilding, pendingBuildables);
@@ -1238,8 +1278,9 @@ void AEfficiencyCheckerBuilding::UpdateItem_Implementation
     float in_injectedInput,
     float in_limitedThroughput,
     float in_requiredOutput,
-    const TArray<TSubclassOf<UFGItemDescriptor>>& in_injectedItems
+    const TArray<TSubclassOf<UFGItemDescriptor>>& in_injectedItems,
+    bool in_overflow
 )
 {
-    OnUpdateItem.Broadcast(in_injectedInput, in_limitedThroughput, in_requiredOutput, in_injectedItems);
+    OnUpdateItem.Broadcast(in_injectedInput, in_limitedThroughput, in_requiredOutput, in_injectedItems, in_overflow);
 }
