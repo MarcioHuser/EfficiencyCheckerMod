@@ -202,6 +202,15 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure)
     static float GetAutoUpdateDistance();
 
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    static bool IsCompatibleVersion();
+
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    static int32 GetCurrentGameVersion();
+
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    static int32 GetCompatibleGameVersion();
+
     UPROPERTY(BlueprintReadOnly, SaveGame, Replicated)
     TArray<TSubclassOf<UFGItemDescriptor>> injectedItems;
 

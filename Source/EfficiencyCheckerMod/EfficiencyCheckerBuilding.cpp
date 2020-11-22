@@ -189,43 +189,47 @@ void AEfficiencyCheckerBuilding::EndPlay(const EEndPlayReason::Type endPlayReaso
     {
         if (innerPipelineAttachment && endPlayReason == EEndPlayReason::Destroyed)
         {
-            auto attachmentPipeConnections = innerPipelineAttachment->GetPipeConnections();
-
-            const auto pipeConnection1 = attachmentPipeConnections.Num() > 0 && attachmentPipeConnections[0]->IsConnected()
-                                             ? attachmentPipeConnections[0]->GetPipeConnection()
-                                             : nullptr;
-            const auto pipeConnection2 = attachmentPipeConnections.Num() > 1 && attachmentPipeConnections[1]->IsConnected()
-                                             ? attachmentPipeConnections[1]->GetPipeConnection()
-                                             : nullptr;
-
-            auto fluidType = pipeConnection1 ? pipeConnection1->GetFluidDescriptor() : nullptr;
-            if (!fluidType)
+            if (FEfficiencyCheckerModModule::compatibleVersion)
             {
-                fluidType = pipeConnection2 ? pipeConnection2->GetFluidDescriptor() : nullptr;
+                auto attachmentPipeConnections = innerPipelineAttachment->GetPipeConnections();
+
+                const auto pipeConnection1 = attachmentPipeConnections.Num() > 0 && attachmentPipeConnections[0]->IsConnected()
+                                                 ? attachmentPipeConnections[0]->GetPipeConnection()
+                                                 : nullptr;
+                const auto pipeConnection2 = attachmentPipeConnections.Num() > 1 && attachmentPipeConnections[1]->IsConnected()
+                                                 ? attachmentPipeConnections[1]->GetPipeConnection()
+                                                 : nullptr;
+
+                auto fluidType = pipeConnection1 ? pipeConnection1->GetFluidDescriptor() : nullptr;
+                if (!fluidType)
+                {
+                    fluidType = pipeConnection2 ? pipeConnection2->GetFluidDescriptor() : nullptr;
+                }
+
+                // Remove the connections
+                for (auto connection : attachmentPipeConnections)
+                {
+                    connection->ClearConnection();
+                }
+
+                if (pipeConnection1 && pipeConnection2 &&
+                    FVector::Dist(pipeConnection1->GetConnectorLocation(), pipeConnection2->GetConnectorLocation()) <= 1)
+                {
+                    // Merge together
+
+                    TArray<AFGBuildablePipeline*> pipelines;
+                    pipelines.Add(Cast<AFGBuildablePipeline>(pipeConnection1->GetOwner()));
+                    pipelines.Add(Cast<AFGBuildablePipeline>(pipeConnection2->GetOwner()));
+
+                    // Merge the pipes
+                    AFGBuildablePipeline::Merge(pipelines);
+
+                    AFGPipeSubsystem::Get(GetWorld())->TrySetNetworkFluidDescriptor(innerPipelineAttachment->GetPipeConnections()[0]->GetPipeNetworkID(), fluidType);
+                }
+
+                innerPipelineAttachment->Destroy();
             }
-
-            // Remove the connections
-            for (auto connection : attachmentPipeConnections)
-            {
-                connection->ClearConnection();
-            }
-
-            if (pipeConnection1 && pipeConnection2 &&
-                FVector::Dist(pipeConnection1->GetConnectorLocation(), pipeConnection2->GetConnectorLocation()) <= 1)
-            {
-                // Merge together
-
-                TArray<AFGBuildablePipeline*> pipelines;
-                pipelines.Add(Cast<AFGBuildablePipeline>(pipeConnection1->GetOwner()));
-                pipelines.Add(Cast<AFGBuildablePipeline>(pipeConnection2->GetOwner()));
-
-                // Merge the pipes
-                AFGBuildablePipeline::Merge(pipelines);
-
-                AFGPipeSubsystem::Get(GetWorld())->TrySetNetworkFluidDescriptor(innerPipelineAttachment->GetPipeConnections()[0]->GetPipeNetworkID(), fluidType);
-            }
-
-            innerPipelineAttachment->Destroy();
+            
             innerPipelineAttachment = nullptr;
         }
 
@@ -861,6 +865,8 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
                     out_injectedItems.Add(fluidItem);
                 }
 
+                initialThroughtputLimit = AEfficiencyCheckerLogic::getPipeSpeed(pipe);
+
                 break;
             }
         }
@@ -990,6 +996,11 @@ void AEfficiencyCheckerBuilding::Server_UpdateConnectedProduction
 {
     if (HasAuthority())
     {
+        if (!FEfficiencyCheckerModModule::compatibleVersion)
+        {
+            return;
+        }
+
         if (FEfficiencyCheckerModModule::dumpConnections)
         {
             SML::Logging::info(*getTagName(), TEXT("Server_UpdateConnectedProduction"));
@@ -1271,6 +1282,21 @@ float AEfficiencyCheckerBuilding::GetAutoUpdateTimeout()
 float AEfficiencyCheckerBuilding::GetAutoUpdateDistance()
 {
     return FEfficiencyCheckerModModule::autoUpdateDistance;
+}
+
+bool AEfficiencyCheckerBuilding::IsCompatibleVersion()
+{
+    return FEfficiencyCheckerModModule::compatibleVersion;
+}
+
+int32 AEfficiencyCheckerBuilding::GetCurrentGameVersion()
+{
+    return FEfficiencyCheckerModModule::currentGameVersion;
+}
+
+int32 AEfficiencyCheckerBuilding::GetCompatibleGameVersion()
+{
+    return FEfficiencyCheckerModModule::compatibleGameVersion;
 }
 
 void AEfficiencyCheckerBuilding::UpdateItem_Implementation

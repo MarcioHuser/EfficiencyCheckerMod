@@ -3,6 +3,7 @@
 
 #include "EfficiencyCheckerHologram.h"
 #include "EfficiencyCheckerBuilding.h"
+#include "EfficiencyCheckerModModule.h"
 #include "EfficiencyCheckerRCO.h"
 
 #include "FGBuildableConveyorBelt.h"
@@ -72,6 +73,11 @@ void AEfficiencyCheckerHologram::BeginPlay()
 
 bool AEfficiencyCheckerHologram::IsValidHitResult(const FHitResult& hitResult) const
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::IsValidHitResult(hitResult);
+    }
+    
     const auto defaultBuildable = GetDefaultBuildable<AEfficiencyCheckerBuilding>();
 
     bool ret = Super::IsValidHitResult(hitResult);
@@ -123,6 +129,11 @@ bool AEfficiencyCheckerHologram::IsValidHitResult(const FHitResult& hitResult) c
 
 void AEfficiencyCheckerHologram::AdjustForGround(const FHitResult& hitResult, FVector& out_adjustedLocation, FRotator& out_adjustedRotation)
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::AdjustForGround(hitResult, out_adjustedLocation, out_adjustedRotation);
+    }
+    
     const auto defaultBuildable = GetDefaultBuildable<AEfficiencyCheckerBuilding>();
 
     static float lastCheck = 0;
@@ -392,6 +403,11 @@ void AEfficiencyCheckerHologram::AdjustForGround(const FHitResult& hitResult, FV
 
 void AEfficiencyCheckerHologram::CheckValidPlacement()
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::CheckValidPlacement();
+    }
+
     static float lastCheck = 0;
     if (GetWorld()->TimeSince(lastCheck) > 10)
     {
@@ -462,6 +478,11 @@ void AEfficiencyCheckerHologram::dumpDisqualifiers() const
 
 void AEfficiencyCheckerHologram::ConfigureComponents(AFGBuildable* inBuildable) const
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::ConfigureComponents(inBuildable);
+    }
+    
     SML::Logging::info(*getTagName(), TEXT("ConfigureComponents "), *inBuildable->GetPathName(), TEXT(" / "), *getAuthorityAndPlayer(inBuildable));
 
     Super::ConfigureComponents(inBuildable);
@@ -490,6 +511,11 @@ void AEfficiencyCheckerHologram::ConfigureComponents(AFGBuildable* inBuildable) 
 
 void AEfficiencyCheckerHologram::ScrollRotate(int32 delta, int32 step)
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::ScrollRotate(delta, step);
+    }
+    
     static float lastCheck = 0;
 
     if (efficiencyChecker)
@@ -513,6 +539,11 @@ void AEfficiencyCheckerHologram::ScrollRotate(int32 delta, int32 step)
 
 void AEfficiencyCheckerHologram::GetSupportedScrollModes(TArray<EHologramScrollMode>* out_modes) const
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::GetSupportedScrollModes(out_modes);
+    }
+    
     if (out_modes)
     {
         out_modes->Add(EHologramScrollMode::HSM_ROTATE);

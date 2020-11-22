@@ -1,4 +1,5 @@
 ﻿#include "EfficiencyCheckerEquipment.h"
+#include "EfficiencyCheckerModModule.h"
 #include "Logic/EfficiencyCheckerLogic.h"
 
 #include "FGBuildablePipeline.h"
@@ -19,6 +20,11 @@ AEfficiencyCheckerEquipment::AEfficiencyCheckerEquipment()
 
 void AEfficiencyCheckerEquipment::PrimaryFirePressed(AFGBuildable* targetBuildable)
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return;
+    }
+
     float injectedInput = 0;
     float requiredOutput = 0;
 

@@ -3,6 +3,7 @@
 
 #include "EfficiencyCheckerHologramWall.h"
 #include "EfficiencyCheckerBuilding.h"
+#include "EfficiencyCheckerModModule.h"
 
 #include "FGConstructDisqualifier.h"
 #include "FGFactoryConnectionComponent.h"
@@ -44,6 +45,11 @@ void AEfficiencyCheckerHologramWall::BeginPlay()
 
 bool AEfficiencyCheckerHologramWall::IsValidHitResult(const FHitResult& hitResult) const
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::IsValidHitResult(hitResult);
+    }
+    
     const auto defaultBuildable = GetDefaultBuildable<AEfficiencyCheckerBuilding>();
 
     bool ret = false;
@@ -90,6 +96,11 @@ bool AEfficiencyCheckerHologramWall::IsValidHitResult(const FHitResult& hitResul
 
 void AEfficiencyCheckerHologramWall::AdjustForGround(const FHitResult& hitResult, FVector& out_adjustedLocation, FRotator& out_adjustedRotation)
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::AdjustForGround(hitResult, out_adjustedLocation, out_adjustedRotation);
+    }
+    
     static float lastCheck = 0;
 
     if (GetWorld()->TimeSince(lastCheck) > 10)
@@ -258,6 +269,11 @@ void AEfficiencyCheckerHologramWall::AdjustForGround(const FHitResult& hitResult
 
 void AEfficiencyCheckerHologramWall::SetHologramLocationAndRotation(const FHitResult& hitResult)
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::SetHologramLocationAndRotation(hitResult);
+    }
+    
     Super::SetHologramLocationAndRotation(hitResult);
 
     static float lastCheck = 0;
@@ -276,6 +292,11 @@ void AEfficiencyCheckerHologramWall::SetHologramLocationAndRotation(const FHitRe
 
 void AEfficiencyCheckerHologramWall::CheckValidPlacement()
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::CheckValidPlacement();
+    }
+    
     static float lastCheck = 0;
     if (GetWorld()->TimeSince(lastCheck) > 10)
     {
@@ -313,6 +334,11 @@ void AEfficiencyCheckerHologramWall::dumpDisqualifiers() const
 
 void AEfficiencyCheckerHologramWall::ScrollRotate(int32 delta, int32 step)
 {
+    if(!FEfficiencyCheckerModModule::compatibleVersion)
+    {
+        return Super::ScrollRotate(delta, step);
+    }
+    
     static float lastCheck = 0;
 
     rotationDelta += delta;

@@ -24,4 +24,7 @@ public:
 	static float autoUpdateTimeout;
 	static float autoUpdateDistance;
 	static bool ignoreStorageTeleporter;
+	static bool compatibleVersion;
+	static int32 currentGameVersion;
+	static int32 compatibleGameVersion;
 };

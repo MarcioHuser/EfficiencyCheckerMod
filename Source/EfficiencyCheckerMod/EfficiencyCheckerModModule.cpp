@@ -1,3 +1,4 @@
+// ReSharper disable IdentifierTypo
 #include "EfficiencyCheckerModModule.h"
 #include "EfficiencyCheckerBuilding.h"
 
@@ -19,6 +20,9 @@ bool FEfficiencyCheckerModModule::dumpConnections = false;
 float FEfficiencyCheckerModModule::autoUpdateTimeout = 10;
 float FEfficiencyCheckerModModule::autoUpdateDistance = 5 * 800;
 bool FEfficiencyCheckerModModule::ignoreStorageTeleporter = false;
+bool FEfficiencyCheckerModModule::compatibleVersion = true;
+int32 FEfficiencyCheckerModModule::currentGameVersion = 0;
+int32 FEfficiencyCheckerModModule::compatibleGameVersion = 136408;
 
 void FEfficiencyCheckerModModule::StartupModule()
 {
@@ -60,6 +64,27 @@ void FEfficiencyCheckerModModule::StartupModule()
     SML::Logging::info(*getTimeStamp(), TEXT(" EfficiencyChecker: autoUpdateDistance = "), autoUpdateDistance);
     SML::Logging::info(*getTimeStamp(), TEXT(" EfficiencyChecker: dumpConnections = "), dumpConnections ? TEXT("true") : TEXT("false"));
     SML::Logging::info(*getTimeStamp(), TEXT(" EfficiencyChecker: ignoreStorageTeleporter = "), ignoreStorageTeleporter ? TEXT("true") : TEXT("false"));
+
+    // FString PatternString(TEXT("CL#(\\d+)$"));
+    // FRegexPattern Pattern(PatternString);
+    // FRegexMatcher Matcher(Pattern, UFGVersionFunctionLibrary::GetVersionString());
+    // if (Matcher.FindNext())
+    // {
+    //     auto versionNumberStr = Matcher.GetCaptureGroup(1);
+    // }
+
+    currentGameVersion = FEngineVersion::Current().GetChangelist();
+
+#if !true
+    // Toggle version testing:
+    // true = any version will work
+    // false = will lock the specific compatible version
+    compatibleGameVersion = currentGameVersion;
+#endif
+
+    compatibleVersion = compatibleGameVersion == currentGameVersion;
+
+    SML::Logging::info(*getTimeStamp(), TEXT(" EfficiencyChecker: "), compatibleVersion ? TEXT("is compatible game version") : TEXT("not a compatible game version"));
 
     if (autoUpdate)
     {

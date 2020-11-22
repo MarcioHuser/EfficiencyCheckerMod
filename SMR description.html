@@ -1,6 +1,6 @@
 <hr/>
 
-<h1><font color="red">⚠ ⚠ ⚠ Do not use this mod with the EXP branch, because it will crash. If you want to play on EXP, remove this mod ⚠ ⚠ ⚠</font></h1>
+<h1><font color="red">⚠ ⚠ ⚠ This mod is not compatible with the current EXP version, but will not crash if used anyway: the buildings and the hand tool will not work, displaying a warning message instead ⚠ ⚠ ⚠</font></h1>
 
 <hr/>
 
@@ -162,15 +162,16 @@ To solve it you can either rebuilt the Checker; OR just walk way and return late
 <br/>
 
 ### Changelog
-- Version 1.1.3
+- Version 1.1.2
 	- Optimization
 		- Code refactoring to optimize connected pipes/belts crawling to prevent Stack Overflow erros for very long/heavy splitted setups. Regardless, if it can't find a
 			tight enought crawling path, the game will no longer crash (hopefully), but the checkers will not report any number, showing instead an "Error" status
 	- Fix
 		- Fixed the correct throughput limit for pipe networks that include MK2 pipes
 		- Fixed stack overflow errors that would crash the game (hoperfully)
+		- Fixed crash that happens when used with current EXP version (but the mod will not show computed numbers, displaying a warning instead)
 
-- Version 1.1.2
+- Version 1.1.1
 	- Fix
 		- Fixed some invalid meshes that could crash the game for some users
 

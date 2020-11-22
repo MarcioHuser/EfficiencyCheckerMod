@@ -9,6 +9,7 @@
         <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.pdb" DestinationFolder="C:\Games\Epic Games\SatisfactoryEarlyAccess\mods"/>
         <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.dll" DestinationFolder="..\..\Mods\EfficiencyCheckerMod"/>
         <Copy SourceFiles="..\..\Binaries\Win64\UE4-EfficiencyCheckerMod-Win64-Shipping.pdb" DestinationFolder="..\..\Mods\EfficiencyCheckerMod"/>
+        <Exec Command="..\..\combine.cmd"/>
         <Delete Files="..\..\Mods\EfficiencyCheckerMod.zip"/>
         <ZipDirectory SourceDirectory="..\..\Mods\EfficiencyCheckerMod" DestinationFile="..\..\Mods\EfficiencyCheckerMod.zip"/>
     </Target>
