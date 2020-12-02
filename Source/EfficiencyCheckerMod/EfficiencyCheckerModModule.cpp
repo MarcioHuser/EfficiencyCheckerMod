@@ -22,7 +22,7 @@ float FEfficiencyCheckerModModule::autoUpdateDistance = 5 * 800;
 bool FEfficiencyCheckerModModule::ignoreStorageTeleporter = false;
 bool FEfficiencyCheckerModModule::compatibleVersion = true;
 int32 FEfficiencyCheckerModModule::currentGameVersion = 0;
-int32 FEfficiencyCheckerModModule::compatibleGameVersion = 136408;
+int32 FEfficiencyCheckerModModule::compatibleGameVersion = 138229;
 
 void FEfficiencyCheckerModModule::StartupModule()
 {
@@ -75,10 +75,12 @@ void FEfficiencyCheckerModModule::StartupModule()
 
     currentGameVersion = FEngineVersion::Current().GetChangelist();
 
-#if !true
+#if true
     // Toggle version testing:
     // true = any version will work
     // false = will lock the specific compatible version
+
+    // Overwrite version number to the current one
     compatibleGameVersion = currentGameVersion;
 #endif
 
