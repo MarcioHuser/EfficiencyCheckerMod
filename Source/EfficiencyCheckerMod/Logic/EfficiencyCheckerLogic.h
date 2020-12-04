@@ -67,6 +67,7 @@ public:
     static bool actorContainsItem(const std::map<AActor*, TSet<TSubclassOf<UFGItemDescriptor>>>& seenActors, AActor* actor, const TSubclassOf<UFGItemDescriptor>& item);
     static void addAllItemsToActor(std::map<AActor*, TSet<TSubclassOf<UFGItemDescriptor>>>& seenActors, AActor* actor, const TSet<TSubclassOf<UFGItemDescriptor>>& items);
 
+    static bool inheritsFrom(AActor* owner, const FString& className);
     static void dumpUnknownClass(const FString& indent, AActor* owner);
 
     inline static FString

@@ -807,7 +807,7 @@ void AEfficiencyCheckerBuilding::GetConnectedProduction
 
             if (pipe->IsPendingKill() || currentPipe && pipe->GetBuildTime() < currentPipe->GetBuildTime())
             {
-                SML::Logging::info(*getTagName(), TEXT("Conveyor "), *pipe->GetName(), anchorPoint.X,TEXT(" was skipped"));
+                SML::Logging::info(*getTagName(), TEXT("Pipe "), *pipe->GetName(), anchorPoint.X,TEXT(" was skipped"));
 
                 continue;
             }
