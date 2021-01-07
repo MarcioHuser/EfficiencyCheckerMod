@@ -3065,36 +3065,40 @@ void AEfficiencyCheckerLogic::dumpUnknownClass(const FString& indent, AActor* ow
 			SML::Logging::info(*getTimeStamp(), *indent, TEXT("    - Super: "), *cls->GetPathName());
 		}
 
+		SML::Logging::info(*getTimeStamp(), *indent, TEXT("Properties "), *owner->GetClass()->GetPathName());
+
 		for (TFieldIterator<UProperty> property(owner->GetClass()); property; ++property)
 		{
 			SML::Logging::info(
 				*getTimeStamp(),
 				*indent,
-				TEXT("    - "),
+				TEXT("        - "),
 				*property->GetName(),
 				TEXT(" ("),
 				*property->GetCPPType(),
-				TEXT(" / "),
+				TEXT(" / Type: "),
 				*property->GetClass()->GetPathName(),
+				TEXT(" / From: "),
+				*property->GetOwnerClass()->GetPathName(),
 				TEXT(")")
 				);
 
 			auto floatProperty = Cast<UFloatProperty>(*property);
 			if (floatProperty)
 			{
-				SML::Logging::info(*getTimeStamp(), *indent, TEXT("        = "), floatProperty->GetPropertyValue_InContainer(owner));
+				SML::Logging::info(*getTimeStamp(), *indent, TEXT("            = "), floatProperty->GetPropertyValue_InContainer(owner));
 			}
 
 			auto intProperty = Cast<UIntProperty>(*property);
 			if (intProperty)
 			{
-				SML::Logging::info(*getTimeStamp(), *indent, TEXT("        = "), intProperty->GetPropertyValue_InContainer(owner));
+				SML::Logging::info(*getTimeStamp(), *indent, TEXT("            = "), intProperty->GetPropertyValue_InContainer(owner));
 			}
 
 			auto boolProperty = Cast<UBoolProperty>(*property);
 			if (boolProperty)
 			{
-				SML::Logging::info(*getTimeStamp(), *indent, TEXT("        = "), boolProperty->GetPropertyValue_InContainer(owner) ? TEXT("true") : TEXT("false"));
+				SML::Logging::info(*getTimeStamp(), *indent, TEXT("            = "), boolProperty->GetPropertyValue_InContainer(owner) ? TEXT("true") : TEXT("false"));
 			}
 
 			auto structProperty = Cast<UStructProperty>(*property);
@@ -3103,14 +3107,21 @@ void AEfficiencyCheckerLogic::dumpUnknownClass(const FString& indent, AActor* ow
 				auto factoryTick = structProperty->ContainerPtrToValuePtr<FFactoryTickFunction>(owner);
 				if (factoryTick)
 				{
-					SML::Logging::info(*getTimeStamp(), *indent, TEXT("    - Tick Interval = "), factoryTick->TickInterval);
+					SML::Logging::info(*getTimeStamp(), *indent, TEXT("            - Tick Interval = "), factoryTick->TickInterval);
 				}
 			}
 
 			auto strProperty = Cast<UStrProperty>(*property);
 			if (strProperty)
 			{
-				SML::Logging::info(*getTimeStamp(), *indent, TEXT("        = "), *strProperty->GetPropertyValue_InContainer(owner));
+				SML::Logging::info(*getTimeStamp(), *indent, TEXT("            = "), *strProperty->GetPropertyValue_InContainer(owner));
+			}
+
+			auto classProperty = Cast<UClassProperty>(*property);
+			if (classProperty)
+			{
+				auto ClassObject = Cast<UClass>(classProperty->GetPropertyValue_InContainer(owner));
+				SML::Logging::info(*getTimeStamp(), *indent, TEXT("            - Class = "), ClassObject ?  *ClassObject->GetPathName() : TEXT("None"));
 			}
 		}
 	}

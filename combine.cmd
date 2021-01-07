@@ -1,6 +1,6 @@
 pushd "%~dp0\Mods\EfficiencyCheckerMod"
 
-copy /y ..\..\Content\EfficiencyCheckerMod\Icons\effcheck.png effcheck.png
+copy /y ..\..\Content\EfficiencyCheckerMod\Icons\effcheck2.png effcheck.png
 
 echo {"resources"^:{"icon"^:"effcheck.png"}} > "resources.json"
 

@@ -5,7 +5,6 @@ Marcio Neves
 
 === UI ===
 Multiplayer banner, Icon and panel designed by Deantendo#4265 (find him at Satisfactory Modding Discord server)
-Icons made by Freepik from www.flaticon.com
 
 === Special thanks ===
 TwoTwoEleven (Micro Manage) for the orientations on how to get the multiplayer working
