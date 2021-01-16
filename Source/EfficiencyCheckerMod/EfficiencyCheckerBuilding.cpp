@@ -70,22 +70,22 @@ void AEfficiencyCheckerBuilding::BeginPlay()
 	//     AEfficiencyCheckerLogic::allEfficiencyBuildings.Add(this);
 	// }
 
+	auto arrows = GetComponentsByTag(UStaticMeshComponent::StaticClass(), TEXT("DirectionArrow"));
+	for (auto arrow : arrows)
+	{
+		// Cast<UStaticMeshComponent>(arrow)->SetVisibilitySML(false);
+
+		arrow->DestroyComponent();
+	}
+
+	TInlineComponentArray<UWidgetComponent*> widgets(this, true);
+	for (auto widget : widgets)
+	{
+		widget->SetVisibilitySML(true);
+	}
+
 	if (HasAuthority())
 	{
-		auto arrows = GetComponentsByTag(UStaticMeshComponent::StaticClass(), TEXT("DirectionArrow"));
-		for (auto arrow : arrows)
-		{
-			// Cast<UStaticMeshComponent>(arrow)->SetVisibilitySML(false);
-
-			arrow->DestroyComponent();
-		}
-
-		TInlineComponentArray<UWidgetComponent*> widgets(this, true);
-		for (auto widget : widgets)
-		{
-			widget->SetVisibilitySML(true);
-		}
-
 		if (innerPipelineAttachment && pipelineToSplit)
 		{
 			auto fluidType = pipelineToSplit->GetFluidDescriptor();
