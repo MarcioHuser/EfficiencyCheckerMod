@@ -52,6 +52,9 @@ public:
     UFUNCTION(BlueprintCallable, Server, WithValidation, Reliable, Category="EfficiencyCheckerRCO",DisplayName="SetAutoUpdateMode")
     virtual void SetAutoUpdateModeRPC(class AEfficiencyCheckerBuilding* efficiencyChecker, EAutoUpdateType autoUpdateMode);
 
+    UFUNCTION(BlueprintCallable, Server, WithValidation, Reliable, Category="EfficiencyCheckerRCO",DisplayName="SetAutoUpdateMode")
+    virtual void PrimaryFirePressedPC(class AEfficiencyCheckerEquipment* efficiencyCheckerEquip, AFGBuildable* targetBuildable);
+
     UPROPERTY(Replicated)
     bool dummy = true;
 };

@@ -308,7 +308,7 @@ void AEfficiencyCheckerBuilding::Tick(float dt)
 												TEXT("New building "),
 												playerTranslation.X,
 												TEXT(" connected to known building "),
-												*connectionComponent->GetConnection()->GetOwner()->GetPathName()
+												*GetPathNameSafe(connectionComponent->GetConnection()->GetOwner())
 												);
 
 											mustUpdate_ = true;
@@ -1202,7 +1202,7 @@ void AEfficiencyCheckerBuilding::setPendingPotentialCallback(class AFGBuildableF
 	SML::Logging::info(
 		*getTimeStamp(),
 		TEXT(" EfficiencyCheckerBuilding: SetPendingPotential of building "),
-		*buildable->GetPathName(),
+		*GetPathNameSafe(buildable),
 		TEXT(" to "),
 		potential
 		);

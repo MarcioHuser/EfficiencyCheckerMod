@@ -83,7 +83,7 @@ bool AEfficiencyCheckerHologramWall::IsValidHitResult(const FHitResult& hitResul
             //
             //     for (const auto component : wall->GetComponents())
             //     {
-            //         SML::Logging::info(*getTagName(), TEXT("    "), *component->GetName(), TEXT(" / "), *component->GetClass()->GetPathName());
+            //         SML::Logging::info(*getTagName(), TEXT("    "), *component->GetName(), TEXT(" / "), *GetPathNameSafe(component->GetClass()));
             //     }
             // }
         }

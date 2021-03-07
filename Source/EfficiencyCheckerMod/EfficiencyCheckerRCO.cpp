@@ -1,5 +1,6 @@
 ﻿#include "EfficiencyCheckerRCO.h"
 #include "EfficiencyCheckerBuilding.h"
+#include "EFficiencyCheckerEquipment.h"
 
 #include "FGPlayerController.h"
 
@@ -137,6 +138,19 @@ void UEfficiencyCheckerRCO::SetAutoUpdateModeRPC_Implementation(class AEfficienc
 }
 
 bool UEfficiencyCheckerRCO::SetAutoUpdateModeRPC_Validate(class AEfficiencyCheckerBuilding* efficiencyChecker, EAutoUpdateType autoUpdateMode)
+{
+    return true;
+}
+
+void UEfficiencyCheckerRCO::PrimaryFirePressedPC_Implementation(class AEfficiencyCheckerEquipment* efficiencyCheckerEquip, AFGBuildable* targetBuildable)
+{
+    if(efficiencyCheckerEquip->HasAuthority())
+    {
+        efficiencyCheckerEquip->PrimaryFirePressed_Server(targetBuildable);
+    }
+}
+
+bool UEfficiencyCheckerRCO::PrimaryFirePressedPC_Validate(class AEfficiencyCheckerEquipment* efficiencyCheckerEquip, AFGBuildable* targetBuildable)
 {
     return true;
 }

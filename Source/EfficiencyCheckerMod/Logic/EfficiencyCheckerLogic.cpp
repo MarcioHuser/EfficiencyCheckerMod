@@ -4,7 +4,9 @@
 
 #include "EfficiencyCheckerLogic.h"
 #include "EfficiencyCheckerModModule.h"
+#include "EfficiencyCheckerRCO.h"
 
+#include "Animation/AnimSequence.h"
 #include "FGBuildableConveyorAttachment.h"
 #include "FGBuildableConveyorBase.h"
 #include "FGBuildableConveyorBelt.h"
@@ -13,6 +15,7 @@
 #include "FGBuildableGeneratorNuclear.h"
 #include "FGBuildableManufacturer.h"
 #include "FGBuildablePipeline.h"
+#include "FGBuildablePipelinePump.h"
 #include "FGBuildableRailroadStation.h"
 #include "FGBuildableResourceExtractor.h"
 #include "FGBuildableSplitterSmart.h"
@@ -39,9 +42,6 @@
 #include <set>
 #include <map>
 
-
-#include "EfficiencyCheckerRCO.h"
-#include "FGBuildablePipelinePump.h"
 
 #ifndef OPTIMIZE
 #pragma optimize( "", off )
@@ -203,7 +203,7 @@ void AEfficiencyCheckerLogic::collectInput
 			return;
 		}
 
-		const auto fullClassName = owner->GetClass()->GetPathName();
+		const auto fullClassName = GetPathNameSafe(owner->GetClass());
 
 		if (level > 100)
 		{
@@ -857,7 +857,7 @@ void AEfficiencyCheckerLogic::collectInput
 								TEXT(" / item = "),
 								*UFGItemDescriptor::GetItemName(rule.ItemClass).ToString(),
 								TEXT(" / class = "),
-								*rule.ItemClass->GetPathName()
+								*GetPathNameSafe(rule.ItemClass)
 								);
 						}
 
@@ -1161,15 +1161,32 @@ void AEfficiencyCheckerLogic::collectInput
 					out_limitedThroughput = FMath::Min(out_limitedThroughput, getPipeSpeed(pipeline));
 				}
 
-				auto otherConnections = components.FilterByPredicate(
-					[connector, seenActors](UFGPipeConnectionComponent* pipeConnection)
-					{
-						return seenActors.Num() == 1 ||
-							pipeConnection != connector && pipeConnection->IsConnected();
-					}
-					);
+				auto otherConnections = seenActors.Num() == 1
+					                        ? components
+					                        : components.FilterByPredicate(
+						                        [connector, seenActors](UFGPipeConnectionComponent* pipeConnection)
+						                        {
+							                        return
+								                        pipeConnection != connector && pipeConnection->IsConnected();
+						                        }
+						                        );
 
 				auto pipePump = Cast<AFGBuildablePipelinePump>(fluidIntegrant);
+				auto pipeConnection = Cast<UFGPipeConnectionComponent>(connector);
+
+				if (pipePump && pipePump->GetUserFlowLimit() > 0 && components.Num() == 2 && components[0]->IsConnected() && components[1]->IsConnected())
+				{
+					auto pipe0 = Cast<AFGBuildablePipeline>(components[0]->GetPipeConnection()->GetOwner());
+					auto pipe1 = Cast<AFGBuildablePipeline>(components[1]->GetPipeConnection()->GetOwner());
+
+					out_limitedThroughput = FMath::Min(
+                        out_limitedThroughput,
+                        UFGBlueprintFunctionLibrary::RoundFloatWithPrecision(
+                            FMath::Min(getPipeSpeed(pipe0), getPipeSpeed(pipe1)) * pipePump->GetUserFlowLimit() / pipePump->GetDefaultFlowLimit(),
+                            4
+                            )
+                        );
+				}
 
 				if (otherConnections.Num() == 0)
 				{
@@ -1177,8 +1194,10 @@ void AEfficiencyCheckerLogic::collectInput
 					SML::Logging::info(*getTimeStamp(), *indent, *owner->GetName(), TEXT(" has no other connection"));
 				}
 				else if (otherConnections.Num() == 1 &&
-					otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_CONSUMER &&
-					otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_PRODUCER)
+					(otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_CONSUMER &&
+						otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_PRODUCER ||
+						pipeConnection->GetPipeConnectionType() == EPipeConnectionType::PCT_PRODUCER &&
+						otherConnections[0]->GetPipeConnectionType() == EPipeConnectionType::PCT_CONSUMER))
 				{
 					connected.Add(buildable);
 
@@ -1206,6 +1225,11 @@ void AEfficiencyCheckerLogic::collectInput
 						}
 
 						if (!connection->IsConnected())
+						{
+							continue;
+						}
+
+						if (connection->GetPipeConnectionType() == EPipeConnectionType::PCT_PRODUCER)
 						{
 							continue;
 						}
@@ -1711,7 +1735,7 @@ void AEfficiencyCheckerLogic::collectOutput
 			return;
 		}
 
-		auto fullClassName = owner->GetClass()->GetPathName();
+		auto fullClassName = GetPathNameSafe(owner->GetClass());
 
 		if (level > 100)
 		{
@@ -2212,7 +2236,7 @@ void AEfficiencyCheckerLogic::collectOutput
 								TEXT(" / item = "),
 								*UFGItemDescriptor::GetItemName(rule.ItemClass).ToString(),
 								TEXT(" / class = "),
-								*rule.ItemClass->GetPathName()
+								*GetPathNameSafe(rule.ItemClass)
 								);
 						}
 
@@ -2432,58 +2456,6 @@ void AEfficiencyCheckerLogic::collectOutput
 		if (resourceForm == EResourceForm::RF_LIQUID || resourceForm == EResourceForm::RF_GAS)
 		{
 			auto pipeline = Cast<AFGBuildablePipeline>(owner);
-			// if (pipeline)
-			// {
-			//     addAllItemsToActor(seenActors, pipeline, injectedItems);
-			//
-			//     // out_limitedThroughput = UFGBlueprintFunctionLibrary::RoundFloatWithPrecision(pipeline->GetFlowLimit() * 60, 4);
-			//     // // out_limitedThroughput = pipeline->mFlowLimit * 60;
-			//     //
-			//     // auto components = pipeline->GetPipeConnections();
-			//     //
-			//     // for (auto connection : components)
-			//     // {
-			//     //     if (!connection->IsConnected() || connection->GetPipeConnection()->GetPipeConnectionType() == EPipeConnectionType::PCT_PRODUCER)
-			//     //     {
-			//     //         continue;
-			//     //     }
-			//     //
-			//     //     float previousLimit = out_limitedThroughput;
-			//     //     collectOutput(
-			//     //         resourceForm,
-			//     //         connection->GetConnection(),
-			//     //         out_requiredOutput,
-			//     //         previousLimit,
-			//     //         seenActors,
-			//     //         connected,
-			//     //         injectedItems,
-			//     //         buildableSubsystem,
-			//     //         level + 1,
-			//     //         indent + TEXT("    ")
-			//     //         );
-			//     //
-			//     //     out_limitedThroughput = FMath::Min(out_limitedThroughput, previousLimit);
-			//     // }
-			//
-			//     auto flowLimit = getPipeSpeed(pipeline);
-			//
-			//     out_limitedThroughput = FMath::Min(out_limitedThroughput, flowLimit);
-			//
-			//     if (FEfficiencyCheckerModModule::dumpConnections)
-			//     {
-			//         SML::Logging::info(*getTimeStamp(), *indent, *pipeline->GetName(), TEXT(" flow limit = "), flowLimit, TEXT(" m³/minute"));
-			//         SML::Logging::info(*getTimeStamp(), *indent, *pipeline->GetName(), TEXT(" limited at "), out_limitedThroughput, TEXT(" m³/minute"));
-			//     }
-			//
-			//     connected.Add(pipeline);
-			//
-			//     // Get the opposing connector
-			//     connector = connector == pipeline->GetPipeConnection0()
-			//                     ? pipeline->GetPipeConnection1()->GetConnection()
-			//                     : pipeline->GetPipeConnection0()->GetConnection();
-			//
-			//     continue;
-			// }
 
 			auto fluidIntegrant = Cast<IFGFluidIntegrantInterface>(owner);
 			if (fluidIntegrant)
@@ -2499,15 +2471,31 @@ void AEfficiencyCheckerLogic::collectOutput
 					out_limitedThroughput = FMath::Min(out_limitedThroughput, getPipeSpeed(pipeline));
 				}
 
-				auto otherConnections = components.FilterByPredicate(
-					[connector, seenActors](UFGPipeConnectionComponent* pipeConnection)
-					{
-						return seenActors.size() == 1 ||
-							pipeConnection != connector && pipeConnection->IsConnected();
-					}
-					);
+				auto otherConnections = seenActors.size() == 1
+					                        ? components
+					                        : components.FilterByPredicate(
+						                        [connector, seenActors](UFGPipeConnectionComponent* pipeConnection)
+						                        {
+							                        return pipeConnection != connector && pipeConnection->IsConnected();
+						                        }
+						                        );
 
 				auto pipePump = Cast<AFGBuildablePipelinePump>(fluidIntegrant);
+				auto pipeConnection = Cast<UFGPipeConnectionComponent>(connector);
+
+				if (pipePump && pipePump->GetUserFlowLimit() > 0 && components.Num() == 2 && components[0]->IsConnected() && components[1]->IsConnected())
+				{
+					auto pipe0 = Cast<AFGBuildablePipeline>(components[0]->GetPipeConnection()->GetOwner());
+					auto pipe1 = Cast<AFGBuildablePipeline>(components[1]->GetPipeConnection()->GetOwner());
+
+					out_limitedThroughput = FMath::Min(
+						out_limitedThroughput,
+						UFGBlueprintFunctionLibrary::RoundFloatWithPrecision(
+							FMath::Min(getPipeSpeed(pipe0), getPipeSpeed(pipe1)) * pipePump->GetUserFlowLimit() / pipePump->GetDefaultFlowLimit(),
+							4
+							)
+						);
+				}
 
 				if (otherConnections.Num() == 0)
 				{
@@ -2515,8 +2503,10 @@ void AEfficiencyCheckerLogic::collectOutput
 					SML::Logging::info(*getTimeStamp(), *indent, *owner->GetName(), TEXT(" has no other connection"));
 				}
 				else if (otherConnections.Num() == 1 &&
-					otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_PRODUCER &&
-					otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_CONSUMER)
+					(otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_CONSUMER &&
+						otherConnections[0]->GetPipeConnectionType() != EPipeConnectionType::PCT_PRODUCER ||
+						pipeConnection->GetPipeConnectionType() == EPipeConnectionType::PCT_CONSUMER &&
+						otherConnections[0]->GetPipeConnectionType() == EPipeConnectionType::PCT_PRODUCER))
 				{
 					connected.Add(buildable);
 
@@ -2537,7 +2527,7 @@ void AEfficiencyCheckerLogic::collectOutput
 
 					bool firstActor = seenActors.size() == 1;
 
-					for (auto connection : components)
+					for (auto connection : (firstActor ? components : otherConnections))
 					{
 						if (connection == connector && !firstActor)
 						{
@@ -2545,6 +2535,11 @@ void AEfficiencyCheckerLogic::collectOutput
 						}
 
 						if (!connection->IsConnected())
+						{
+							continue;
+						}
+
+						if (connection->GetPipeConnectionType() == EPipeConnectionType::PCT_CONSUMER)
 						{
 							continue;
 						}
@@ -3045,7 +3040,7 @@ bool AEfficiencyCheckerLogic::inheritsFrom(AActor* owner, const FString& classNa
 {
 	for (auto cls = owner->GetClass(); cls && cls != AActor::StaticClass(); cls = cls->GetSuperClass())
 	{
-		if (cls->GetPathName() == className)
+		if (GetPathNameSafe(cls) == className)
 		{
 			return true;
 		}
@@ -3058,14 +3053,14 @@ void AEfficiencyCheckerLogic::dumpUnknownClass(const FString& indent, AActor* ow
 {
 	if (FEfficiencyCheckerModModule::dumpConnections)
 	{
-		SML::Logging::info(*getTimeStamp(), *indent, TEXT("Unknown Class "), *owner->GetClass()->GetPathName());
+		SML::Logging::info(*getTimeStamp(), *indent, TEXT("Unknown Class "), *GetPathNameSafe(owner->GetClass()));
 
 		for (auto cls = owner->GetClass()->GetSuperClass(); cls && cls != AActor::StaticClass(); cls = cls->GetSuperClass())
 		{
-			SML::Logging::info(*getTimeStamp(), *indent, TEXT("    - Super: "), *cls->GetPathName());
+			SML::Logging::info(*getTimeStamp(), *indent, TEXT("    - Super: "), *GetPathNameSafe(cls));
 		}
 
-		SML::Logging::info(*getTimeStamp(), *indent, TEXT("Properties "), *owner->GetClass()->GetPathName());
+		SML::Logging::info(*getTimeStamp(), *indent, TEXT("Properties "), *GetPathNameSafe(owner->GetClass()));
 
 		for (TFieldIterator<UProperty> property(owner->GetClass()); property; ++property)
 		{
@@ -3077,9 +3072,9 @@ void AEfficiencyCheckerLogic::dumpUnknownClass(const FString& indent, AActor* ow
 				TEXT(" ("),
 				*property->GetCPPType(),
 				TEXT(" / Type: "),
-				*property->GetClass()->GetPathName(),
+				*GetPathNameSafe(property->GetClass()),
 				TEXT(" / From: "),
-				*property->GetOwnerClass()->GetPathName(),
+				*GetPathNameSafe(property->GetOwnerClass()),
 				TEXT(")")
 				);
 
@@ -3121,7 +3116,7 @@ void AEfficiencyCheckerLogic::dumpUnknownClass(const FString& indent, AActor* ow
 			if (classProperty)
 			{
 				auto ClassObject = Cast<UClass>(classProperty->GetPropertyValue_InContainer(owner));
-				SML::Logging::info(*getTimeStamp(), *indent, TEXT("            - Class = "), ClassObject ?  *ClassObject->GetPathName() : TEXT("None"));
+				SML::Logging::info(*getTimeStamp(), *indent, TEXT("            - Class = "), *GetPathNameSafe(ClassObject));
 			}
 		}
 	}
@@ -3178,6 +3173,8 @@ void AEfficiencyCheckerLogic::DumpInformation(TSubclassOf<UFGItemDescriptor> ite
 		SML::Logging::info(*getTimeStamp(), TEXT(" Equipment unequip sound = "), *GetPathNameSafe(equipment->mUnequipSound));
 		SML::Logging::info(*getTimeStamp(), TEXT(" Equipment widget = "), *GetPathNameSafe(equipment->mEquipmentWidget));
 		SML::Logging::info(*getTimeStamp(), TEXT(" Equipment use default primary fire = "), equipment->mUseDefaultPrimaryFire ? TEXT("true") : TEXT("false"));
+		SML::Logging::info(*getTimeStamp(), TEXT(" Equipment idle pose animation = "), *GetPathNameSafe(equipment->GetIdlePoseAnimation()));
+		SML::Logging::info(*getTimeStamp(), TEXT(" Equipment idle pose animation 3p = "), *GetPathNameSafe(equipment->GetIdlePoseAnimation3p()));
 
 		SML::Logging::info(*getTimeStamp(), TEXT(" Dump done"));
 	}
@@ -3253,7 +3250,7 @@ bool AEfficiencyCheckerLogic::IsValidBuildable(AFGBuildable* newBuildable)
 		return true;
 	}
 	if (!FEfficiencyCheckerModModule::ignoreStorageTeleporter &&
-		newBuildable->GetClass()->GetPathName() == TEXT("/Game/StorageTeleporter/Buildables/ItemTeleporter/ItemTeleporter_Build.ItemTeleporter_Build_C"))
+		GetPathNameSafe(newBuildable->GetClass()) == TEXT("/Game/StorageTeleporter/Buildables/ItemTeleporter/ItemTeleporter_Build.ItemTeleporter_Build_C"))
 	{
 		addTeleporter(newBuildable);
 

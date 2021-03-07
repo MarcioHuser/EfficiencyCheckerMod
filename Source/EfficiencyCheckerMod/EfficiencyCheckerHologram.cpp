@@ -483,7 +483,7 @@ void AEfficiencyCheckerHologram::ConfigureComponents(AFGBuildable* inBuildable) 
         return Super::ConfigureComponents(inBuildable);
     }
     
-    SML::Logging::info(*getTagName(), TEXT("ConfigureComponents "), *inBuildable->GetPathName(), TEXT(" / "), *getAuthorityAndPlayer(inBuildable));
+    SML::Logging::info(*getTagName(), TEXT("ConfigureComponents "), *GetPathNameSafe(inBuildable), TEXT(" / "), *getAuthorityAndPlayer(inBuildable));
 
     Super::ConfigureComponents(inBuildable);
 
